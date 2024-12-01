@@ -1,117 +1,96 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import {NavigationContainer} from '@react-navigation/native';
+import React, {useEffect, useState} from 'react';
+import DeviceInfo from 'react-native-device-info';
+import JailMonkey from 'jail-monkey';
 
-import React from 'react';
-import type {Node} from 'react';
+//COMPONENTS
+import LocationError from './src/components/LocationError';
+import DeveloperEnabled from './src/components/DeveloperEnabled';
+//Navigator
+import MainNavigator from './src/navigation/MainNavigator';
+import AuthNavigator from './src/navigation/AuthNavigator';
+
+//GEOLOCATION
+import Geolocation from 'react-native-geolocation-service';
+import {Platform, Alert} from 'react-native';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+  checkAutoDateTime,
+  checkAutoTimeZone,
+} from './src/helper/DeveloperOptions';
+import DateTimeError from './src/components/DateTimeError';
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [locStatus, setLocStatus] = useState(true);
+  const [isDebugMode, setIsDebugMode] = useState(false);
+  const [isAutoDateTime, setIsAutoDateTime] = useState(true);
+  useEffect(() => {
+    setInterval(() => {
+      isGpsEnable();
+      // devOptions();
+      // dateTime();
+    }, 1000);
+  }, []);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-/* $FlowFixMe[missing-local-annot] The type annotation(s) required by Flow's
- * LTI update could not be added via codemod */
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  //FUNCTIONS
+  const isGpsEnable = async () => {
+    if (Platform.OS === 'ios') {
+      const authStatus = await Geolocation.requestAuthorization('whenInUse');
+      if (authStatus === 'granted') {
+        setLocStatus(true)
+      } else {
+        setLocStatus(false)
+      }
+    }
+    if (Platform.OS === 'android') {
+      const isLocationEnabled = await DeviceInfo.isLocationEnabled();
+      setLocStatus(isLocationEnabled);
+    }
   };
 
+  const devOptions = async () => {
+    const res = await JailMonkey.isDevelopmentSettingsMode();
+    setIsDebugMode(res);
+  };
+
+  const dateTime = async () => {
+    if(Platform.OS == "android"){
+      const date = await checkAutoDateTime();
+    const timezone = await checkAutoTimeZone();
+
+    if (!date || !timezone) {
+      setIsAutoDateTime(false);
+    } else {
+      setIsAutoDateTime(true);
+    }
+    }
+  };
+
+  const NavContainer = () => {
+    return (
+      <NavigationContainer>
+        {isAuthenticated ? (
+          <MainNavigator setIsAuthenticated={setIsAuthenticated} />
+        ) : (
+          <AuthNavigator setIsAuthenticated={setIsAuthenticated} />
+        )}
+      </NavigationContainer>
+    );
+  };
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <>
+      {isDebugMode ? (
+        <DeveloperEnabled />
+      ) : locStatus ? (
+        isAutoDateTime ? (
+          <NavContainer />
+        ) : (
+          <DateTimeError />
+        )
+      ) : (
+        <LocationError />
+      )}
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
