@@ -29,7 +29,8 @@ import {removeDb} from '../helper/database';
 import {currentLocation} from '../services/getLocation';
 
 //Helper
-import {userDetails} from '../helper/database';
+import {userDetails, copyDB} from '../helper/database';
+import { androidSN } from '../helper/DeveloperOptions';
 
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
@@ -44,16 +45,16 @@ const HomeScreen = ({setIsAuthenticated}) => {
   const [coordinates, setCoordinates] = useState();
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
-  const [name, setName] = useState();
-  const [idNumber, setIdNumber] = useState();
+  const [name, setName] = useState('');
+  const [idNumber, setIdNumber] = useState('');
   /*
    * USE EFFECT
    */
 
   //Check Location Permission
   useEffect(() => {
+  loadDetails()
     requestPermission();
-    loadDetails();
     watchCurrentLocation();
     // myLocation();
     const timer = setInterval(() => {
@@ -84,6 +85,7 @@ const HomeScreen = ({setIsAuthenticated}) => {
           requestPermission();
         }
       }
+      requestPermission();
     }
   };
 
@@ -200,6 +202,8 @@ const HomeScreen = ({setIsAuthenticated}) => {
   };
 
   const loadDetails = async () => {
+    console.log("running loaddetails");
+    
     const details = await userDetails();
     setName(details.name);
     setIdNumber(details.employee);
@@ -216,15 +220,17 @@ const HomeScreen = ({setIsAuthenticated}) => {
   const checkOut = async () => {
     // const db = await openDatabase();
     // await fetchAddress();
-    await removeDb();
+    // await removeDb();
+
+
   };
   return (
     <>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{name}</Text>
-            <Text style={styles.employeeId}>ID: {idNumber}</Text>
+          <View key={name + idNumber} style={styles.userInfo}>
+            <Text style={styles.userName}>{name || 'Name'}</Text>
+            <Text style={styles.employeeId}>ID: {idNumber }</Text>
           </View>
           <TouchableOpacity onPress={logout}>
             <Icon name="log-out-outline" size={30} color="#fff" />
@@ -293,13 +299,14 @@ const HomeScreen = ({setIsAuthenticated}) => {
               icon="time-outline"
               color="#FDB913"
               textColor="#006341"
-              handleAction={OTIN}
+              handleAction={e=> copyDB()}
             />
             <GButton
               title="Overtime Out"
               icon="timer-outline"
               color="#FDB913"
               textColor="#006341"
+              handleAction={e => androidSN()}
             />
           </View>
           <View style={styles.card}>

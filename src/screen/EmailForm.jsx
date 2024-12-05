@@ -68,7 +68,10 @@ export default function EmailAddForm({navigation, accountID, password}) {
             setLoading(true);
             if (!res.loading) {
               setLoading(false);
-              if (!res.data.Error) {
+              console.log(res);
+              
+              if(!res.error){
+                if (!res.data.Error) {
                 if (password == 'LBRDC') {
                   navigation.navigate('ChangePassword');
                 } else {
@@ -76,6 +79,9 @@ export default function EmailAddForm({navigation, accountID, password}) {
                 }
               } else {
                 Alert.alert('Error', res.data.msg);
+              }
+              }else{
+                Alert.alert("Error", res.data);
               }
             }
           },

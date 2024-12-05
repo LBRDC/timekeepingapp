@@ -92,9 +92,18 @@ export const userDetails = async () => {
         'select * from account',
         [],
         (tx, result) => {
+          console.log(result);
+          
+          for(let i = 0; i <= result.rows.length - 1; i++) {
+            const user = result.rows.item(i);
+            console.log(user);
+            
+          }
+          
           resolve(result.rows.item(0));
         },
         (tx, error) => {
+          console.log(error);
           reject(error);
         },
       );
@@ -105,3 +114,17 @@ export const userDetails = async () => {
 export const removeDb = async () => {
   await RNFS.unlink(dbPath);
 };
+
+
+export const copyDB = async ()=>{
+const externalPath = `${RNFS.DownloadDirectoryPath}/mobile_timekeeping.db`;
+try {
+  await RNFS.copyFile(dbPath, externalPath);
+  console.log('File copied to:', externalPath);
+  // Alert.alert('File Copied', `File copied to: ${externalPath}`);
+} catch (error) {
+  console.error('Error copying file:', error);
+  // Alert.alert('Error', `Failed to copy file: ${error.message}`);
+}
+
+}

@@ -59,6 +59,8 @@ export default function PasswordChangeForm({navigation, password, accountID}) {
         setloadermsg('Changing password...');
         setLoading(true);
         if (!res.loading) {
+          console.log(res.data);
+          
           setLoading(false);
           if (!res.data.Error) {
             navigation.navigate('Login');

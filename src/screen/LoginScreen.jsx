@@ -25,13 +25,12 @@ import InputText from '../components/InputText';
 import Button from '../components/Button';
 import Loader from '../components/Loader';
 import CTextInput from '../components/CTextInput';
-
 //Services
 import {URL, executeRequest} from '../services/urls';
 
 //Helper
 import {syncAccount} from '../helper/database';
-
+import { getDeviceUniqueId } from '../helper/DeveloperOptions';
 const databaseFilePath = `${RNFS.DocumentDirectoryPath}/mobile_timekeeping.db`;
 const fileUrl =
   'https://www.dropbox.com/scl/fi/8ev6f115s7igu7gulm600/mobile_timekeeping.db?rlkey=xfbttezo7m2eei61j02eo4icy&st=1hdi0m1z&dl=1';
@@ -109,7 +108,7 @@ const LoginScreen = ({
           setLoading(false);
           if (!res.error && !res.data.Error) {
             //Login Success
-            // console.log(res.data);
+     
             setAccountID(res.data.data.accountID);
             setAccPassword(res.data.data.Password);
             if (res.data.data.Email.length === 0) {
@@ -120,7 +119,22 @@ const LoginScreen = ({
               navigation.navigate('ChangePassword');
               return;
             }
-            console.log(res.data.data);
+
+            if(res.data.data.identifier.length == 0){
+              navigation.navigate('RegDevice')
+              return;
+            }
+
+            if(res.data.data.Status == 0){
+              Alert.alert("Account Problem", "Account is deactivated")
+              return;
+            }
+            const DEVICE_ID = await getDeviceUniqueId()
+            if(res.data.data.identifier !== DEVICE_ID ){
+              Alert.alert("Invalid Device", "Please use the device you registered with")
+              return;
+            }
+
             await syncAccount(res.data.data);
             setIsAuthenticated(true);
           } else {
@@ -147,7 +161,6 @@ const LoginScreen = ({
 
   const downloadDB = async () => {
     try {
-      // setIsDownloading(true);
       setloadermsg('Downloading...');
       setLoading(true);
       const downloadResult = await RNFS.downloadFile({
@@ -156,11 +169,9 @@ const LoginScreen = ({
       }).promise;
 
       if (downloadResult.statusCode === 200) {
-        // setIsDownloading(false);
         setLoading(false);
         Alert.alert('Success', 'Dataset downloaded successfully!');
       } else {
-        // setIsDownloading(false);
         setLoading(false);
         console.error(
           'Download failed with status code:',
@@ -169,7 +180,6 @@ const LoginScreen = ({
         Alert.alert('Error', 'Download failed!');
       }
     } catch (error) {
-      // setIsDownloading(false);
       setLoading(false);
       console.error('Error downloading database:', error);
       Alert.alert('Error', 'Error downloading database!');
