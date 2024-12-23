@@ -4,9 +4,10 @@ const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async data => {
   // console.log(data);
-
   const details = await readDetails();
-  await writeDetails(data);
+  if (!Object.values(details.account)[1].length != 0) {
+    await writeDetails(data);
+  }
 };
 
 export const checkDatasetExists = async () => {
@@ -32,9 +33,6 @@ export const readDetails = async () => {
 export const writeDetails = async data => {
   try {
     const details = await readDetails();
-    console.log(details);
-    console.log(details.length);
-    console.log('==========================');
     //Account
     details.account.accountid = data.accountID;
     details.account.email = data.Email;
@@ -48,22 +46,14 @@ export const writeDetails = async data => {
     details.location.longitude = data.longitude;
     details.location.radius = data.radius;
     //Records
-    console.log(data);
-    console.log('==========================');
-    console.log(details);
-    console.log();
 
-    return;
-
-    // Convert the data to a JSON string
-    const jsonData = JSON.stringify(data, null, 2); // Pretty print with 2 spaces
-    // Write the JSON string to the file
+    const jsonData = JSON.stringify(details, null, 2);
     await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
     console.log('Data written successfully to:', USER_DATA);
-    return true; // Return true if write is successful
+    return true;
   } catch (error) {
     console.error('Error writing JSON data:', error);
-    return false; // Return false in case of error
+    return false;
   }
 };
 
