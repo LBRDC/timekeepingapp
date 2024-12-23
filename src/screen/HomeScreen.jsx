@@ -221,6 +221,9 @@ const HomeScreen = ({setIsAuthenticated}) => {
     // const db = await openDatabase();
     // await fetchAddress();
     // await removeDb();
+    
+    console.log(await userDetails());
+    
 
 
   };

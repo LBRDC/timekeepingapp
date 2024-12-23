@@ -29,11 +29,13 @@ import CTextInput from '../components/CTextInput';
 import {URL, executeRequest} from '../services/urls';
 
 //Helper
-import {syncAccount} from '../helper/database';
-import { getDeviceUniqueId } from '../helper/DeveloperOptions';
-const databaseFilePath = `${RNFS.DocumentDirectoryPath}/mobile_timekeeping.db`;
+import {saveDetails, checkDatasetExists} from '../helper/database';
+import {getDeviceUniqueId} from '../helper/DeveloperOptions';
+const datasetFilePath = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 const fileUrl =
-  'https://www.dropbox.com/scl/fi/8ev6f115s7igu7gulm600/mobile_timekeeping.db?rlkey=xfbttezo7m2eei61j02eo4icy&st=1hdi0m1z&dl=1';
+  'https://www.dropbox.com/scl/fi/zxswy1jis5r5uq89epu5l/timekeeping_data.json?rlkey=2cg0pkhw4xksat6e5wchyz5cs&st=z5p4owti&dl=1';
+// const fileUrl =
+//   'https://www.dropbox.com/scl/fi/8ev6f115s7igu7gulm600/mobile_timekeeping.db?rlkey=xfbttezo7m2eei61j02eo4icy&st=1hdi0m1z&dl=1';
 const LoginScreen = ({
   navigation,
   setIsAuthenticated,
@@ -55,8 +57,8 @@ const LoginScreen = ({
   }, []);
 
   const init = async () => {
-    const dbExist = await checkDatabaseExists();
-    if (!dbExist) {
+    const dataset = await checkDatasetExists();
+    if (!dataset) {
       Alert.alert(
         'Notice',
         'We need to sync dataset in order to use this app.',
@@ -72,31 +74,19 @@ const LoginScreen = ({
     }
   };
 
-  const checkDatabaseExists = async () => {
-    try {
-      const fileExists = await RNFS.exists(databaseFilePath);
-      return fileExists;
-    } catch (error) {
-      console.error('Error checking database existence:', error);
-      return false;
-    }
-  };
-
   const login = async () => {
-    const dbExist = await checkDatabaseExists();
-    if (!dbExist) {
+    const dsExist = await checkDatasetExists();
+    if (!dsExist) {
       init();
       return;
     }
-    if (!dbExist) {
+    if (!dsExist) {
       return;
     }
-
     if (!idNumber || !password) {
       Alert.alert('Warning', 'Please fill in all fields.');
       return;
     }
-
     executeRequest(
       URL().login,
       'POST',
@@ -108,7 +98,6 @@ const LoginScreen = ({
           setLoading(false);
           if (!res.error && !res.data.Error) {
             //Login Success
-     
             setAccountID(res.data.data.accountID);
             setAccPassword(res.data.data.Password);
             if (res.data.data.Email.length === 0) {
@@ -120,23 +109,26 @@ const LoginScreen = ({
               return;
             }
 
-            if(res.data.data.identifier.length == 0){
-              navigation.navigate('RegDevice')
+            if (res.data.data.identifier.length == 0) {
+              navigation.navigate('RegDevice');
               return;
             }
 
-            if(res.data.data.Status == 0){
-              Alert.alert("Account Problem", "Account is deactivated")
+            if (res.data.data.Status == 0) {
+              Alert.alert('Account Problem', 'Account is deactivated');
               return;
             }
-            const DEVICE_ID = await getDeviceUniqueId()
-            if(res.data.data.identifier !== DEVICE_ID ){
-              Alert.alert("Invalid Device", "Please use the device you registered with")
+            const DEVICE_ID = await getDeviceUniqueId();
+            if (res.data.data.identifier !== DEVICE_ID) {
+              Alert.alert(
+                'Invalid Device',
+                'Please use the device you registered with',
+              );
               return;
             }
-
-            await syncAccount(res.data.data);
-            setIsAuthenticated(true);
+            console.log('Syncing');
+            await saveDetails(res.data.data);
+            // setIsAuthenticated(true);
           } else {
             Alert.alert('Ooops!', res.data.msg);
           }
@@ -165,7 +157,7 @@ const LoginScreen = ({
       setLoading(true);
       const downloadResult = await RNFS.downloadFile({
         fromUrl: fileUrl,
-        toFile: databaseFilePath,
+        toFile: datasetFilePath,
       }).promise;
 
       if (downloadResult.statusCode === 200) {

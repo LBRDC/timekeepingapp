@@ -24,8 +24,6 @@ target 'timekeeping' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  # Add the SQLite package
-  pod 'react-native-sqlite-storage', :path => '../node_modules/react-native-sqlite-storage'
 
   target 'timekeepingTests' do
     inherit! :complete
