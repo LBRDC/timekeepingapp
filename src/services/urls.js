@@ -11,6 +11,16 @@ export function URL() {
 
 // export function URL() {
 //   return {
+//     login: 'http://localhost:3002/query/mobile/login.php',
+//     otp: 'http://localhost:3002/query/mobile/mail/mail.php',
+//     updateEmail: 'http://localhost:3002/query/mobile/updateEmail.php',
+//     updatePassword: 'http://localhost:3002/query/mobile/updatePassword.php',
+//     registerDevice: 'http://localhost:3002/query/mobile/addSerial.php',
+//   };
+// }
+
+// export function URL() {
+//   return {
 //     login: 'http://192.168.1.5:3002/query/mobile/login.php',
 //     otp: 'http://192.168.1.5:3002/query/mobile/mail/mail.php',
 //     updateEmail: 'http://192.168.1.5:3002/query/mobile/updateEmail.php',

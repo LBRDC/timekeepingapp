@@ -3,10 +3,14 @@ import RNFS, {read} from 'react-native-fs';
 const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async data => {
-  // console.log(data);
   const details = await readDetails();
-  if (!Object.values(details.account)[1].length != 0) {
-    await writeDetails(data);
+  try {
+    if (!Object.values(details.account)[1].length != 0) {
+      await writeDetails(data);
+    }
+    return {error: false, message: 'Details saved successfully'};
+  } catch (error) {
+    return {error: true, message: 'Error saving details'};
   }
 };
 

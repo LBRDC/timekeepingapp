@@ -119,16 +119,19 @@ const LoginScreen = ({
               return;
             }
             const DEVICE_ID = await getDeviceUniqueId();
-            if (res.data.data.identifier !== DEVICE_ID) {
-              Alert.alert(
-                'Invalid Device',
-                'Please use the device you registered with',
-              );
+            // if (res.data.data.identifier !== DEVICE_ID) {
+            //   Alert.alert(
+            //     'Invalid Device',
+            //     'Please use the device you registered with',
+            //   );
+            //   return;
+            // }
+            const {error, message} = await saveDetails(res.data.data);
+            if (error) {
+              Alert.alert('Error', message);
               return;
             }
-            console.log('Syncing');
-            await saveDetails(res.data.data);
-            // setIsAuthenticated(true);
+            setIsAuthenticated(true);
           } else {
             Alert.alert('Ooops!', res.data.msg);
           }

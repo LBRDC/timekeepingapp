@@ -22,27 +22,26 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import GButton from '../components/GButton';
 import LocationError from '../components/LocationError';
 //GEOLOCATION
-import Geolocation from 'react-native-geolocation-service';
 //BIOMETRICS
 import ReactNativeBiometrics from 'react-native-biometrics';
-import {removeDb} from '../helper/database';
-import {currentLocation} from '../services/getLocation';
 
 //Helper
-import {userDetails, copyDB} from '../helper/database';
-import { androidSN } from '../helper/DeveloperOptions';
+import {readDetails} from '../helper/database';
+
+//Location
+import {getCurrentLocation} from '../services/getLocation';
 
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
-const HomeScreen = ({setIsAuthenticated}) => {
+const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [currentDateTime, setCurrentDateTime] = useState('Loading time...');
   const [location, setLocation] = useState('Loading location...');
   const [lastAction, setLastAction] = useState('No recent action');
   const [status, setStatus] = useState('');
   const [isConnected, setIsConnected] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [watchId, setWatchId] = useState(null);
-  const [coordinates, setCoordinates] = useState();
+
+  const [coordinates, setCoordinates] = useState('');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [name, setName] = useState('');
@@ -53,10 +52,9 @@ const HomeScreen = ({setIsAuthenticated}) => {
 
   //Check Location Permission
   useEffect(() => {
-  loadDetails()
     requestPermission();
-    watchCurrentLocation();
-    // myLocation();
+    loadDetails();
+    syncLocation();
     const timer = setInterval(() => {
       checkConnectivity();
       dateTime();
@@ -67,6 +65,11 @@ const HomeScreen = ({setIsAuthenticated}) => {
     };
   }, []);
 
+  useEffect(() => {
+    syncLocation();
+  }, [currentCoordinates.Coordinates]);
+
+  //PERMISSION
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
       const check = await PermissionsAndroid.check(
@@ -89,6 +92,15 @@ const HomeScreen = ({setIsAuthenticated}) => {
     }
   };
 
+  const syncLocation = async () => {
+    const mylocation = await getCurrentLocation(
+      currentCoordinates.Latitude,
+      currentCoordinates.Longitude,
+    );
+    const current_loc = mylocation.results[0]?.formatted_address;
+    console.log(current_loc);
+    setLocation(current_loc);
+  };
   const dateTime = () => {
     const weekdays = [
       'Sunday',
@@ -107,29 +119,36 @@ const HomeScreen = ({setIsAuthenticated}) => {
     setStatus(currentDay);
   };
 
-  //FUNCTIONS
-  const watchCurrentLocation = () => {
-    const id = Geolocation.watchPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        const str = `${latitude},${longitude}`;
-        setLatitude(latitude);
-        setLongitude(longitude);
-        setCoordinates(str);
-      },
-      error => {
-        console.error(error.message);
-      },
-      {
-        enableHighAccuracy: true,
-        distanceFilter: 0,
-        interval: 2000,
-        fastestInterval: 1000,
-      },
-    );
-
-    setWatchId(id);
+  const loadDetails = async () => {
+    const {account} = await readDetails();
+    setName(account.name);
+    setIdNumber(account.employee);
   };
+
+  //FUNCTIONS
+  // const watchCurrentLocation = () => {
+  //   const id = Geolocation.watchPosition(
+  //     position => {
+  //       const {latitude, longitude} = position.coords;
+  //       const str = `${latitude},${longitude}`;
+  //       setLatitude(latitude);
+  //       setLongitude(longitude);
+  //       setCoordinates(str);
+  //       console.log(str);
+  //     },
+  //     error => {
+  //       console.error(error.message);
+  //     },
+  //     {
+  //       enableHighAccuracy: true,
+  //       distanceFilter: 0,
+  //       interval: 2000,
+  //       fastestInterval: 1000,
+  //     },
+  //   );
+
+  //   setWatchId(id);
+  // };
 
   const backhandler = BackHandler.addEventListener('hardwareBackPress', e => {
     Alert.alert('Heyy', 'Are you sure you want to exit?', [
@@ -169,7 +188,7 @@ const HomeScreen = ({setIsAuthenticated}) => {
   //Refresh
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-
+    syncLocation();
     setRefreshing(false);
   }, []);
 
@@ -177,7 +196,9 @@ const HomeScreen = ({setIsAuthenticated}) => {
   const logout = () => {
     setIsAuthenticated(false);
   };
-  const checkIn = async () => {
+  const checkIn = async () => {};
+
+  const biometricsChecker = () => {
     Biometrics.isSensorAvailable()
       .then(result => {
         const {available, biometryType} = result;
@@ -200,40 +221,13 @@ const HomeScreen = ({setIsAuthenticated}) => {
         console.log(err);
       });
   };
-
-  const loadDetails = async () => {
-    console.log("running loaddetails");
-    
-    const details = await userDetails();
-    setName(details.name);
-    setIdNumber(details.employee);
-  };
-
-  const OTIN = async () => {
-    // const loc = await currentLocation(latitude, longitude);
-    // console.log(loc);
-    console.log('fetching...');
-
-    await currentLocation(latitude, longitude);
-  };
-
-  const checkOut = async () => {
-    // const db = await openDatabase();
-    // await fetchAddress();
-    // await removeDb();
-    
-    console.log(await userDetails());
-    
-
-
-  };
   return (
     <>
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <View key={name + idNumber} style={styles.userInfo}>
             <Text style={styles.userName}>{name || 'Name'}</Text>
-            <Text style={styles.employeeId}>ID: {idNumber }</Text>
+            <Text style={styles.employeeId}>ID: {idNumber}</Text>
           </View>
           <TouchableOpacity onPress={logout}>
             <Icon name="log-out-outline" size={30} color="#fff" />
@@ -256,13 +250,16 @@ const HomeScreen = ({setIsAuthenticated}) => {
                 [
                   {
                     color: isConnected ? '#363636' : 'red',
-                    fontWeight: isConnected ? 'regular' : 'bold',
+                    fontWeight: isConnected ? 'normal' : 'bold',
+                    fontSize: 13,
                   },
                 ])
               }>
               {isConnected ? location : 'Offline mode'}
             </Text>
-            <Text style={styles.location}>{coordinates}</Text>
+            <Text style={(styles.location, [{marginTop: 5}])}>
+              {currentCoordinates.Coordinates}
+            </Text>
           </View>
 
           <Text style={styles.sectionTitle}>Time Tracking</Text>
@@ -279,7 +276,7 @@ const HomeScreen = ({setIsAuthenticated}) => {
               icon="log-out-outline"
               color="#006341"
               textColor="#FFFFFF"
-              handleAction={checkOut}
+              handleAction={checkIn}
             />
             <GButton
               title="Break In"
@@ -302,14 +299,14 @@ const HomeScreen = ({setIsAuthenticated}) => {
               icon="time-outline"
               color="#FDB913"
               textColor="#006341"
-              handleAction={e=> copyDB()}
+              handleAction={checkIn}
             />
             <GButton
               title="Overtime Out"
               icon="timer-outline"
               color="#FDB913"
               textColor="#006341"
-              handleAction={e => androidSN()}
+              handleAction={e => checkDetails()}
             />
           </View>
           <View style={styles.card}>
