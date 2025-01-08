@@ -65,6 +65,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     requestPermission();
     syncLocation();
     syncActivity();
+    // loadDetails();
     const timer = setInterval(() => {
       loadDetails();
       checkConnectivity();
@@ -406,6 +407,13 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncActivity();
   };
 
+  const syncRecords = async () => {
+    console.log('hehe');
+
+    const data = await readDetails();
+    console.log(data);
+  };
+
   return (
     <>
       <SafeAreaView style={styles.container}>
@@ -432,6 +440,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               onClose={closeMenu}
               onLogout={logout}
               onSettings={settings}
+              onSync={syncRecords}
             />
           )}
         </View>

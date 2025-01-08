@@ -5,11 +5,15 @@ const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async (data, rememberMe) => {
   const details = await readDetails();
-  console.log(details);
 
   try {
     if (Object.values(details.account)[1].length == 0) {
       await writeDetails(data, rememberMe);
+    } else {
+      if (details.rememberMe != rememberMe) {
+        details.rememberMe = rememberMe;
+        await writeInFile(details);
+      }
     }
     return {error: false, message: 'Details saved'};
   } catch (error) {
@@ -50,6 +54,15 @@ export const writeLocation = async data => {
   } catch (error) {
     console.error('Error writing JSON data:', error);
     return false;
+  }
+};
+
+export const writeInFile = async data => {
+  try {
+    const jsonData = JSON.stringify(data, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+  } catch (error) {
+    console.log(error);
   }
 };
 

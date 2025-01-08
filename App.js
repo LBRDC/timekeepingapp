@@ -18,12 +18,14 @@ import {
   checkAutoTimeZone,
 } from './src/helper/DeveloperOptions';
 import DateTimeError from './src/components/DateTimeError';
+import {checkDatasetExists, readDetails} from './src/helper/database';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [locStatus, setLocStatus] = useState(true);
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
   useEffect(() => {
+    isLoggedIn();
     setInterval(() => {
       isGpsEnable();
       // devOptions();
@@ -36,9 +38,9 @@ const App = () => {
     if (Platform.OS === 'ios') {
       const authStatus = await Geolocation.requestAuthorization('whenInUse');
       if (authStatus === 'granted') {
-        setLocStatus(true)
+        setLocStatus(true);
       } else {
-        setLocStatus(false)
+        setLocStatus(false);
       }
     }
     if (Platform.OS === 'android') {
@@ -53,18 +55,27 @@ const App = () => {
   };
 
   const dateTime = async () => {
-    if(Platform.OS == "android"){
+    if (Platform.OS == 'android') {
       const date = await checkAutoDateTime();
-    const timezone = await checkAutoTimeZone();
+      const timezone = await checkAutoTimeZone();
 
-    if (!date || !timezone) {
-      setIsAutoDateTime(false);
-    } else {
-      setIsAutoDateTime(true);
-    }
+      if (!date || !timezone) {
+        setIsAutoDateTime(false);
+      } else {
+        setIsAutoDateTime(true);
+      }
     }
   };
 
+  const isLoggedIn = async () => {
+    const check = await checkDatasetExists();
+    if (check) {
+      const data = await readDetails();
+      if (data.rememberMe == true) {
+        setIsAuthenticated(true);
+      }
+    }
+  };
   const NavContainer = () => {
     return (
       <NavigationContainer>

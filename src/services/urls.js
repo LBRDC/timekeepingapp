@@ -42,17 +42,72 @@ export function URL() {
 //   };
 // }
 
-export async function executeRequest(url, method, data, result) {
+// export async function executeRequest(url, method, data, result) {
+//   result({error: false, loading: true});
+//   const request = await fetch(url, {
+//     method,
+//     body: data,
+//     headers: {'Content-Type': 'application/json'},
+//   });
+//   if (request.ok) {
+//     const data = await request.json();
+//     return result({error: false, loading: false, data: data});
+//   } else {
+//     return result({error: true, loading: false, data: 'Internal Server Error'});
+//   }
+// }
+
+export async function executeRequest(
+  url,
+  method,
+  data,
+  result,
+  timeout = 3000,
+) {
+  // Initialize loading state
   result({error: false, loading: true});
-  const request = await fetch(url, {
-    method,
-    body: data,
-    headers: {'Content-Type': 'application/json'},
-  });
-  if (request.ok) {
-    const data = await request.json();
-    return result({error: false, loading: false, data: data});
-  } else {
-    return result({error: true, loading: false, data: 'Internal Server Error'});
+
+  // Create an AbortController to handle timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    // Ensure data is properly formatted as JSON
+    const requestBody = data;
+
+    // Make the fetch request
+    const request = await fetch(url, {
+      method,
+      body: requestBody,
+      headers: {'Content-Type': 'application/json'},
+      signal: controller.signal,
+    });
+    // Clear the timeout if the request completes
+    clearTimeout(timeoutId);
+
+    // Check if the response is OK
+    if (request.ok) {
+      const responseData = await request.json();
+      return result({error: false, loading: false, data: responseData});
+    } else {
+      // Handle non-OK responses
+      return result({
+        error: true,
+        loading: false,
+        data: `HTTP Error: ${request.status}`,
+      });
+    }
+  } catch (error) {
+    // Clear the timeout in case of an error
+    clearTimeout(timeoutId);
+
+    // Handle specific errors
+    if (error.name === 'AbortError') {
+      return result({error: true, loading: false, data: 'Request timed out'});
+    } else if (error instanceof TypeError) {
+      return result({error: true, loading: false, data: 'Network Error'});
+    } else {
+      return result({error: true, loading: false, data: 'Unknown Error'});
+    }
   }
 }

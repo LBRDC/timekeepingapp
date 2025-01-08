@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-const NavMenu = ({onClose, onLogout, onSettings}) => {
+const NavMenu = ({onClose, onLogout, onSettings, onSync, onHelp}) => {
   const insets = useSafeAreaInsets();
   const statusBarHieght =
     Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight;
@@ -30,6 +30,7 @@ const NavMenu = ({onClose, onLogout, onSettings}) => {
         onPress={onClose}>
         <View
           style={{
+            width: 120,
             position: 'absolute',
             top: 0,
             right: 5,
@@ -50,12 +51,12 @@ const NavMenu = ({onClose, onLogout, onSettings}) => {
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            onPress={onSettings}>
+            onPress={onSync}>
             <Icon
-              name="settings-outline"
-              style={{marginRight: 10, color: '#333333'}}
+              name="sync-outline"
+              style={{marginRight: 10, color: '#333333', fontSize: 18}}
             />
-            <Text style={{color: '#333333'}}>Settings</Text>
+            <Text style={{color: '#333333', fontSize: 16}}>Sync</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{
@@ -63,12 +64,25 @@ const NavMenu = ({onClose, onLogout, onSettings}) => {
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            onPress={onLogout}>
+            onPress={onSettings}>
+            <Icon
+              name="settings-outline"
+              style={{marginRight: 10, color: '#333333', fontSize: 18}}
+            />
+            <Text style={{color: '#333333', fontSize: 16}}>Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              marginBottom: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={onHelp}>
             <Icon
               name="information-circle-outline"
-              style={{marginRight: 10, color: '#333333'}}
+              style={{marginRight: 10, color: '#333333', fontSize: 18}}
             />
-            <Text style={{color: '#333333'}}>Help</Text>
+            <Text style={{color: '#333333', fontSize: 16}}>Help</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{
@@ -79,9 +93,9 @@ const NavMenu = ({onClose, onLogout, onSettings}) => {
             onPress={onLogout}>
             <Icon
               name="exit-outline"
-              style={{marginRight: 10, color: '#333333'}}
+              style={{marginRight: 10, color: '#333333', fontSize: 18}}
             />
-            <Text style={{color: '#333333'}}>Logout</Text>
+            <Text style={{color: '#333333', fontSize: 16}}>Logout</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>

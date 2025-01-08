@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import RNFS from 'react-native-fs';
+import RNFS, {writeFile} from 'react-native-fs';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
 const logo = require('../assets/animatedLogo.gif');
 const {width, height} = Dimensions.get('window');
@@ -29,7 +29,12 @@ import CTextInput from '../components/CTextInput';
 import {URL, executeRequest} from '../services/urls';
 
 //Helper
-import {saveDetails, checkDatasetExists, readDetails} from '../helper/database';
+import {
+  saveDetails,
+  checkDatasetExists,
+  readDetails,
+  writeInFile,
+} from '../helper/database';
 import {getDeviceUniqueId} from '../helper/DeveloperOptions';
 const datasetFilePath = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 const fileUrl =
@@ -76,8 +81,16 @@ const LoginScreen = ({
   };
 
   const loginOffline = async () => {
-    const {account} = await readDetails();
-    if (account.employee === idNumber && account.password === password) {
+    const data = await readDetails();
+
+    if (
+      data.account.employee == idNumber &&
+      data.account.password == password
+    ) {
+      if (data.rememberMe != rememberMe) {
+        data.rememberMe = rememberMe;
+        writeInFile(data);
+      }
       setIsAuthenticated(true);
     } else {
       Alert.alert('Ooops!', 'Incorrect Password');
@@ -93,12 +106,24 @@ const LoginScreen = ({
     if (!dsExist) {
       return;
     }
+
     if (!idNumber || !password) {
       Alert.alert('Warning', 'Please fill in all fields.');
       return;
     }
 
-    if (!isConnected) {
+    const data = await readDetails();
+    if (dsExist && data.account.employee) {
+      Alert.alert(
+        'Notice',
+        'In order to enable offline features you need to login as online user first.',
+      );
+      return;
+    }
+
+    const active = await isOnline();
+
+    if (!active) {
       Alert.alert('No Internet', 'You will login as offline mode', [
         {text: 'OK', onPress: () => loginOffline()},
         {text: 'Cancel', onPress: () => null},
@@ -155,7 +180,7 @@ const LoginScreen = ({
             }
             setIsAuthenticated(true);
           } else {
-            Alert.alert('Ooops!', res.data.msg);
+            Alert.alert('Ooops!', res.data);
           }
         }
       },
@@ -163,11 +188,14 @@ const LoginScreen = ({
   };
 
   const checkConnectivity = async () => {
+    const dataset = await checkDatasetExists();
     try {
       const req = await fetch('https://www.google.com');
       if (req.ok) {
         setIsConnected(true);
-        downloadDB();
+        if (!dataset) {
+          downloadDB();
+        }
       }
     } catch (error) {
       setIsConnected(false);
@@ -175,6 +203,17 @@ const LoginScreen = ({
         'No Internet',
         'You need an internet connection to download dataset.',
       );
+    }
+  };
+
+  const isOnline = async () => {
+    try {
+      const req = await fetch('https://www.google.com');
+      if (req.ok) {
+        return true;
+      }
+    } catch (error) {
+      return false;
     }
   };
 
