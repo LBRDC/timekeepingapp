@@ -114,6 +114,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const syncActivity = async () => {
     const {records, account} = await readDetails();
     const res = records[records.length - 1];
+    console.log(res);
+
     const data = [
       {
         title: 'Check In',
@@ -408,8 +410,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const syncRecords = async () => {
-    console.log('hehe');
-
     const data = await readDetails();
     console.log(data);
   };

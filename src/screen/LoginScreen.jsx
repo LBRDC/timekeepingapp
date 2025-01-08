@@ -113,7 +113,7 @@ const LoginScreen = ({
     }
 
     const data = await readDetails();
-    if (dsExist && data.account.employee) {
+    if (dsExist && !data.account.employee) {
       Alert.alert(
         'Notice',
         'In order to enable offline features you need to login as online user first.',

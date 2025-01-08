@@ -84,7 +84,6 @@ export const writeDetails = async (data, rememberMe) => {
     details.location.name = data.Location;
     //Remember user
     details.rememberMe = rememberMe;
-    console.log(details);
 
     const jsonData = JSON.stringify(details, null, 2);
     await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
