@@ -29,7 +29,7 @@ import CTextInput from '../components/CTextInput';
 import {URL, executeRequest} from '../services/urls';
 
 //Helper
-import {saveDetails, checkDatasetExists} from '../helper/database';
+import {saveDetails, checkDatasetExists, readDetails} from '../helper/database';
 import {getDeviceUniqueId} from '../helper/DeveloperOptions';
 const datasetFilePath = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 const fileUrl =
@@ -47,6 +47,7 @@ const LoginScreen = ({
   const [rememberMe, setRememberMe] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   // const [isDownloading, setIsDownloading] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [loadermsg, setloadermsg] = useState('Downloading...');
   const [showPassword, setShowPassword] = useState(false);
@@ -74,6 +75,15 @@ const LoginScreen = ({
     }
   };
 
+  const loginOffline = async () => {
+    const {account} = await readDetails();
+    if (account.employee === idNumber && account.password === password) {
+      setIsAuthenticated(true);
+    } else {
+      Alert.alert('Ooops!', 'Incorrect Password');
+    }
+  };
+
   const login = async () => {
     const dsExist = await checkDatasetExists();
     if (!dsExist) {
@@ -87,10 +97,19 @@ const LoginScreen = ({
       Alert.alert('Warning', 'Please fill in all fields.');
       return;
     }
+
+    if (!isConnected) {
+      Alert.alert('No Internet', 'You will login as offline mode', [
+        {text: 'OK', onPress: () => loginOffline()},
+        {text: 'Cancel', onPress: () => null},
+      ]);
+      return;
+    }
+
     executeRequest(
       URL().login,
       'POST',
-      JSON.stringify({username: idNumber, password: password}),
+      JSON.stringify({username: idNumber.trim(), password: password.trim()}),
       async res => {
         setloadermsg('Loading...');
         setLoading(true);
@@ -126,7 +145,10 @@ const LoginScreen = ({
             //   );
             //   return;
             // }
-            const {error, message} = await saveDetails(res.data.data);
+            const {error, message} = await saveDetails(
+              res.data.data,
+              rememberMe,
+            );
             if (error) {
               Alert.alert('Error', message);
               return;
@@ -144,9 +166,11 @@ const LoginScreen = ({
     try {
       const req = await fetch('https://www.google.com');
       if (req.ok) {
+        setIsConnected(true);
         downloadDB();
       }
     } catch (error) {
+      setIsConnected(false);
       Alert.alert(
         'No Internet',
         'You need an internet connection to download dataset.',

@@ -1,14 +1,17 @@
 /* eslint-disable prettier/prettier */
 import RNFS, {read} from 'react-native-fs';
+
 const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
-export const saveDetails = async data => {
+export const saveDetails = async (data, rememberMe) => {
   const details = await readDetails();
+  console.log(details);
+
   try {
-    if (!Object.values(details.account)[1].length != 0) {
-      await writeDetails(data);
+    if (Object.values(details.account)[1].length == 0) {
+      await writeDetails(data, rememberMe);
     }
-    return {error: false, message: 'Details saved successfully'};
+    return {error: false, message: 'Details saved'};
   } catch (error) {
     return {error: true, message: 'Error saving details'};
   }
@@ -34,7 +37,23 @@ export const readDetails = async () => {
   }
 };
 
-export const writeDetails = async data => {
+export const writeLocation = async data => {
+  try {
+    const details = await readDetails();
+    details.location.latitude = data.latitude;
+    details.location.longitude = data.longitude;
+    details.location.radius = data.radius;
+    details.location.name = data.name;
+    const jsonData = JSON.stringify(details, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing JSON data:', error);
+    return false;
+  }
+};
+
+export const writeDetails = async (data, rememberMe) => {
   try {
     const details = await readDetails();
     //Account
@@ -49,16 +68,52 @@ export const writeDetails = async data => {
     details.location.latitude = data.latitude;
     details.location.longitude = data.longitude;
     details.location.radius = data.radius;
-    //Records
+    details.location.name = data.Location;
+    //Remember user
+    details.rememberMe = rememberMe;
+    console.log(details);
 
     const jsonData = JSON.stringify(details, null, 2);
     await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
-    console.log('Data written successfully to:', USER_DATA);
     return true;
   } catch (error) {
     console.error('Error writing JSON data:', error);
     return false;
   }
+};
+
+export const writeRecords = async data => {
+  try {
+    const jsonData = JSON.stringify(data, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing JSON data:', error);
+    return false;
+  }
+};
+
+export const resetRecords = async data => {
+  data = {
+    account: {
+      accountid: '18',
+      email: 'perpetuaedemmanuel1225@gmail.com',
+      employee: '3102',
+      identifier: '55499349-8fa9-4072-9ce5-8eef78135319',
+      location: '1083',
+      name: 'RAMOS, JOSEPH ',
+      password: 'Lbrdc2021',
+    },
+    location: {
+      latitude: '14.572732777884',
+      longitude: '120.98312437534',
+      name: '',
+      radius: '46.532275387312',
+    },
+    records: [],
+  };
+  const jsonData = JSON.stringify(data, null, 2);
+  await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
 };
 
 // export const removeDb = async () => {
