@@ -143,3 +143,12 @@ export const resetRecords = async data => {
 //     // Alert.alert('Error', `Failed to copy file: ${error.message}`);
 //   }
 // };
+
+export const validateLocal = async () => {
+  const {records} = await readDetails();
+  console.log(records.length);
+  const check = records.some(
+    rec => rec.check_in.length == 0 || rec.check_out.length == 0,
+  );
+  console.log(check);
+};

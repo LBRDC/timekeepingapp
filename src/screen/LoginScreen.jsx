@@ -13,7 +13,7 @@ import {
   Alert,
   PermissionsAndroid,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, act} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import RNFS, {writeFile} from 'react-native-fs';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
@@ -112,16 +112,17 @@ const LoginScreen = ({
       return;
     }
 
+    const active = await isOnline();
     const data = await readDetails();
-    if (dsExist && !data.account.employee) {
+    console.log(active);
+
+    if (!active && dsExist && !data.account.employee) {
       Alert.alert(
         'Notice',
         'In order to enable offline features you need to login as online user first.',
       );
       return;
     }
-
-    const active = await isOnline();
 
     if (!active) {
       Alert.alert('No Internet', 'You will login as offline mode', [
@@ -136,6 +137,8 @@ const LoginScreen = ({
       'POST',
       JSON.stringify({username: idNumber.trim(), password: password.trim()}),
       async res => {
+        console.log(res);
+
         setloadermsg('Loading...');
         setLoading(true);
         if (!res.loading) {

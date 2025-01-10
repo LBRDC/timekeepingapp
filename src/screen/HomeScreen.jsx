@@ -28,7 +28,12 @@ import Loader from '../components/Loader';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
 //Helper
-import {readDetails, writeRecords, resetRecords} from '../helper/database';
+import {
+  readDetails,
+  writeRecords,
+  resetRecords,
+  validateLocal,
+} from '../helper/database';
 
 //Location
 import {getCurrentLocation} from '../services/getLocation';
@@ -62,7 +67,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   useEffect(() => {
     setLoading(false);
-    requestPermission();
+    // requestPermission();
     syncLocation();
     syncActivity();
     // loadDetails();
@@ -80,28 +85,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   useEffect(() => {
     syncLocation();
   }, [currentCoordinates.Coordinates]);
-
-  const requestPermission = async () => {
-    if (Platform.OS === 'android') {
-      const check = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (!check) {
-        const request = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-
-        if (request == 'never_ask_again') {
-          Linking.openSettings();
-        }
-
-        if (request !== PermissionsAndroid.RESULTS.GRANTED) {
-          requestPermission();
-        }
-      }
-      requestPermission();
-    }
-  };
 
   const closeMenu = () => {
     setShowMenu(false);
@@ -410,8 +393,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const syncRecords = async () => {
-    const data = await readDetails();
-    console.log(data);
+    await validateLocal();
   };
 
   return (

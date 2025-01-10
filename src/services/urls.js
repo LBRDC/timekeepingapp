@@ -62,7 +62,7 @@ export async function executeRequest(
   method,
   data,
   result,
-  timeout = 3000,
+  timeout = 8000,
 ) {
   // Initialize loading state
   result({error: false, loading: true});
@@ -107,7 +107,11 @@ export async function executeRequest(
     } else if (error instanceof TypeError) {
       return result({error: true, loading: false, data: 'Network Error'});
     } else {
-      return result({error: true, loading: false, data: 'Unknown Error'});
+      return result({
+        error: true,
+        loading: false,
+        data: 'Unknown Error, Please try again a few minutes',
+      });
     }
   }
 }
