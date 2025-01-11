@@ -112,14 +112,14 @@ const LoginScreen = ({
       return;
     }
 
-    const data = await readDetails();
-    if (dsExist && !data.account.employee) {
-      Alert.alert(
-        'Notice',
-        'In order to enable offline features you need to login as online user first.',
-      );
-      return;
-    }
+    // const data = await readDetails();
+    // if (dsExist && data.account.employee.length != 0) {
+    //   Alert.alert(
+    //     'Notice',
+    //     'In order to enable offline features you need to login as online user first.',
+    //   );
+    //   return;
+    // }
 
     const active = await isOnline();
 
@@ -136,6 +136,8 @@ const LoginScreen = ({
       'POST',
       JSON.stringify({username: idNumber.trim(), password: password.trim()}),
       async res => {
+        console.log(res);
+        
         setloadermsg('Loading...');
         setLoading(true);
         if (!res.loading) {

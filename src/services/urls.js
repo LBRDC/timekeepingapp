@@ -1,14 +1,28 @@
 /* eslint-disable prettier/prettier */
+// export function URL() {
+//   return {
+//     login: 'http://192.168.0.49:3002/query/mobile/login.php',
+//     syncAccount: 'http://192.168.0.49:3002/query/mobile/syncAccount.php',
+//     otp: 'http://192.168.0.49:3002/query/mobile/mail/mail.php',
+//     updateEmail: 'http://192.168.0.49:3002/query/mobile/updateEmail.php',
+//     updatePassword: 'http://192.168.0.49:3002/query/mobile/updatePassword.php',
+//     registerDevice: 'http://192.168.0.49:3002/query/mobile/addSerial.php',
+//     timekeep: 'http://192.168.0.49:3002/query/mobile/timekeep.php',
+//     recentAction: 'http://192.168.0.49:3002/query/mobile/recentActivity.php',
+//   };
+// }
+
+
 export function URL() {
   return {
-    login: 'http://192.168.0.49:3002/query/mobile/login.php',
-    syncAccount: 'http://192.168.0.49:3002/query/mobile/syncAccount.php',
-    otp: 'http://192.168.0.49:3002/query/mobile/mail/mail.php',
-    updateEmail: 'http://192.168.0.49:3002/query/mobile/updateEmail.php',
-    updatePassword: 'http://192.168.0.49:3002/query/mobile/updatePassword.php',
-    registerDevice: 'http://192.168.0.49:3002/query/mobile/addSerial.php',
-    timekeep: 'http://192.168.0.49:3002/query/mobile/timekeep.php',
-    recentAction: 'http://192.168.0.49:3002/query/mobile/recentActivity.php',
+    login: 'http://192.168.1.2:3002/query/mobile/login.php',
+    syncAccount: 'http://192.168.1.2:3002/query/mobile/syncAccount.php',
+    otp: 'http://192.168.1.2:3002/query/mobile/mail/mail.php',
+    updateEmail: 'http://192.168.1.2:3002/query/mobile/updateEmail.php',
+    updatePassword: 'http://192.168.1.2:3002/query/mobile/updatePassword.php',
+    registerDevice: 'http://192.168.1.2:3002/query/mobile/addSerial.php',
+    timekeep: 'http://192.168.1.2:3002/query/mobile/timekeep.php',
+    recentAction: 'http://192.168.1.2:3002/query/mobile/recentActivity.php',
   };
 }
 
@@ -100,7 +114,8 @@ export async function executeRequest(
   } catch (error) {
     // Clear the timeout in case of an error
     clearTimeout(timeoutId);
-
+    console.log(error);
+    
     // Handle specific errors
     if (error.name === 'AbortError') {
       return result({error: true, loading: false, data: 'Request timed out'});
