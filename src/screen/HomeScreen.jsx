@@ -93,6 +93,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const settings = () => {
+    closeMenu()
     //SHOW SETTINGS OPTIONS
   };
 
@@ -255,7 +256,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   }, []);
 
   const logout = async () => {
-    setShowMenu(false);
+    closeMenu()
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       {text: 'Cancel', onPress: () => null, style: 'cancel'},
       {text: 'Yes', onPress: () => setIsAuthenticated(false)},
@@ -388,10 +389,14 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const syncRecords = async () => {
+    closeMenu()
     setShowSyncModal(true);
     // await validateLocal();
-    console.log(showSyncModal);
   };
+
+  const helpMenu = async ()=>{
+    closeMenu()
+  }
 
   return (
     <>
@@ -425,6 +430,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               onLogout={logout}
               onSettings={settings}
               onSync={syncRecords}
+              onHelp={helpMenu}
             />
           )}
         </View>

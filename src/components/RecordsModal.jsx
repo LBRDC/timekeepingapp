@@ -30,25 +30,40 @@ const RecordsModal = ({records, visible, onClose}) => {
 
     return formattedTime;
   }
+
+
+  const validator = (data)=>{
+    return data ? unix_to_time(data) : "--"
+  }
   const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.item}
       onPress={() => setSelectedRecord(item)}>
       <Text style={styles.dateText}>Date: {item.date}</Text>
-      <Text style={styles.detailText}>
-        Check-In: {unix_to_time(item.check_in)}
-      </Text>
-      <Text style={styles.detailText}>
-        Check-Out:{unix_to_time(item.check_out)}
-      </Text>
-      <Text style={styles.detailText}>
-        Break-In: {unix_to_time(item.break_in)}
-      </Text>
-      <Text style={styles.detailText}>
-        Break-Out: {unix_to_time(item.break_out)}
-      </Text>
-      <Text style={styles.detailText}>OT-In:{unix_to_time(item.ot_in)}</Text>
-      <Text style={styles.detailText}>OT-Out:{unix_to_time(item.ot_out)}</Text>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>Check-In:</Text>
+        <Text style={styles.detailText}>{validator(item.check_in)}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>Check-Out:</Text>
+        <Text style={styles.detailText}>{validator(item.check_out)}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>Break-In:</Text>
+        <Text style={styles.detailText}>{validator(item.break_in)}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>Break-Out:</Text>
+        <Text style={styles.detailText}>{validator(item.break_out)}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>OT-In:</Text>
+        <Text style={styles.detailText}>{validator(item.ot_in)}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailTitle}>OT-Out:</Text>
+        <Text style={styles.detailText}>{validator(item.ot_out)}</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -83,21 +98,34 @@ const RecordsModal = ({records, visible, onClose}) => {
             <SafeAreaView style={styles.modalContainer}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Record Details</Text>
-                <Text style={styles.detailText}>
-                  Date: {selectedRecord.date}
-                </Text>
-                <Text style={styles.detailText}>
-                  Check-In:{unix_to_time(selectedRecord.check_in)}
-                </Text>
-                <Text style={styles.detailText}>
-                  Check-Out:{unix_to_time(selectedRecord.check_out)}
-                </Text>
-                <Text style={styles.detailText}>
-                  Break-In:{unix_to_time(selectedRecord.break_in)}
-                </Text>
-                <Text style={styles.detailText}>
-                  Break-Out:{unix_to_time(selectedRecord.break_out)}
-                </Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailTitle}>Date:</Text>
+                  <Text style={styles.detailText}>{selectedRecord.date}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailTitle}>Check-In:</Text>
+                  <Text style={styles.detailText}>
+                    {validator(selectedRecord.check_in)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailTitle}>Check-Out:</Text>
+                  <Text style={styles.detailText}>
+                    {validator(selectedRecord.check_out)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailTitle}>Break-In:</Text>
+                  <Text style={styles.detailText}>
+                    {validator(selectedRecord.break_in)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailTitle}>Break-Out:</Text>
+                  <Text style={styles.detailText}>
+                    {validator(selectedRecord.break_out)}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setSelectedRecord(null)}>
@@ -125,47 +153,65 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     maxHeight: '80%',
-    elevation: 4,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#006341',
-    marginBottom: 12,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   item: {
-    padding: 15,
+    padding: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    marginVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F9F9F9',
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#006341',
+    marginBottom: 6,
   },
-  statusText: {
-    fontSize: 14,
-    color: '#757575',
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  detailTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#006341',
+    width: '50%',
   },
   detailText: {
     fontSize: 16,
     color: '#363636',
-    marginBottom: 8,
+    textAlign: 'right',
+    width: '50%',
   },
   closeButton: {
-    marginTop: 10,
-    padding: 10,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     backgroundColor: '#006341',
-    borderRadius: 5,
+    borderRadius: 25,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#004D33',
   },
   closeButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 
