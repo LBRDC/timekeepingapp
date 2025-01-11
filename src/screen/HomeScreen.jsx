@@ -22,20 +22,26 @@ import Icon from 'react-native-vector-icons/Ionicons';
 //COMPONENTS
 import GButton from '../components/GButton';
 import PasswordInputModal from '../components/PasswordInputModal';
+import RecordsModal from '../components/RecordsModal';
 import Loader from '../components/Loader';
+import NavMenu from '../components/NavMenu';
 //GEOLOCATION
 //BIOMETRICS
 import ReactNativeBiometrics from 'react-native-biometrics';
 
 //Helper
-import {readDetails, writeRecords, resetRecords} from '../helper/database';
+import {
+  readDetails,
+  writeRecords,
+  resetRecords,
+  validateLocal,
+} from '../helper/database';
 
 //Location
 import {getCurrentLocation} from '../services/getLocation';
 
 //Services
 import {URL, executeRequest} from '../services/urls';
-import NavMenu from '../components/NavMenu';
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
 /**
@@ -59,10 +65,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [designatedLocation, setDesignatedLocation] = useState('');
   const [showMenu, setShowMenu] = useState(false);
-
+  const [records, setRecords] = useState([]);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   useEffect(() => {
     setLoading(false);
-    requestPermission();
+    // requestPermission();
     syncLocation();
     syncActivity();
     // loadDetails();
@@ -81,28 +88,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncLocation();
   }, [currentCoordinates.Coordinates]);
 
-  const requestPermission = async () => {
-    if (Platform.OS === 'android') {
-      const check = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (!check) {
-        const request = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-
-        if (request == 'never_ask_again') {
-          Linking.openSettings();
-        }
-
-        if (request !== PermissionsAndroid.RESULTS.GRANTED) {
-          requestPermission();
-        }
-      }
-      requestPermission();
-    }
-  };
-
   const closeMenu = () => {
     setShowMenu(false);
   };
@@ -114,7 +99,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const syncActivity = async () => {
     const {records, account} = await readDetails();
     const res = records[records.length - 1];
-    console.log(res);
 
     const data = [
       {
@@ -206,7 +190,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const loadDetails = async () => {
-    const {account, location} = await readDetails();
+    const {account, location, records} = await readDetails();
+    setRecords(records);
     setName(account.name);
     setIdNumber(account.employee);
     setDesignatedLocation(location.name);
@@ -262,13 +247,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     Alert.alert('Notice', 'This feature is not yet available.');
   };
 
-  //Refresh
-  /**
-   * A React callback function that is triggered when a refresh action is performed.
-   * It sets the refreshing state to true, synchronizes the location, and then sets the
-   * refreshing state back to false.
-   * @returns None
-   */
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     syncLocation();
@@ -410,12 +388,18 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const syncRecords = async () => {
-    const data = await readDetails();
-    console.log(data);
+    setShowSyncModal(true);
+    // await validateLocal();
+    console.log(showSyncModal);
   };
 
   return (
     <>
+      <RecordsModal
+        records={records}
+        visible={showSyncModal}
+        onClose={setShowSyncModal}
+      />
       <SafeAreaView style={styles.container}>
         {shown && (
           <PasswordInputModal

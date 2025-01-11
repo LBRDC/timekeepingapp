@@ -12,7 +12,7 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 
 //GEOLOCATION
 import Geolocation from 'react-native-geolocation-service';
-import {Platform, Alert} from 'react-native';
+import {Platform, Alert, PermissionsAndroid, Linking} from 'react-native';
 import {
   checkAutoDateTime,
   checkAutoTimeZone,
@@ -24,7 +24,9 @@ const App = () => {
   const [locStatus, setLocStatus] = useState(true);
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
+  const [isAlertEnabled, setIsAlertEnabled] = useState(true);
   useEffect(() => {
+    requestPermission();
     isLoggedIn();
     setInterval(() => {
       isGpsEnable();
@@ -46,6 +48,46 @@ const App = () => {
     if (Platform.OS === 'android') {
       const isLocationEnabled = await DeviceInfo.isLocationEnabled();
       setLocStatus(isLocationEnabled);
+    }
+  };
+
+  const requestPermission = async () => {
+    if (Platform.OS === 'android') {
+      const check = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+
+      if (!check) {
+        const request = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        console.log(request);
+
+        if (request == 'never_ask_again') {
+          Alert.alert(
+            'Required',
+            'In order to use timekeeping you need to enable location permission in app settings',
+            [
+              {
+                text: 'Ok',
+                onPress: () => {
+                  setIsAlertEnabled(false);
+                  Linking.openSettings();
+                  setInterval(() => {
+                    requestPermission();
+                  }, 3000);
+                },
+              },
+            ],
+          );
+        } else if (request != 'granted') {
+          Alert.alert(
+            'Required',
+            'In order to use timekeeping you need to enable location permission',
+            [{text: 'Ok', onPress: () => requestPermission()}],
+          );
+        }
+      }
     }
   };
 

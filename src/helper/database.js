@@ -5,6 +5,7 @@ const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async (data, rememberMe) => {
   const details = await readDetails();
+  console.log(USER_DATA);
 
   try {
     if (Object.values(details.account)[1].length == 0) {
@@ -143,3 +144,11 @@ export const resetRecords = async data => {
 //     // Alert.alert('Error', `Failed to copy file: ${error.message}`);
 //   }
 // };
+
+export const validateLocal = async () => {
+  const {records} = await readDetails();
+
+  const check = records.some(rec => {
+    return rec.check_in.length == 0 || rec.check_out.length == 0;
+  });
+};
