@@ -35,6 +35,7 @@ import {
   writeRecords,
   validateLocal,
   resetRecords,
+  writeInFile,
 } from '../helper/database';
 
 //Location
@@ -69,6 +70,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncActivity();
     // loadDetails();
     const timer = setInterval(() => {
+      syncAccount();
       loadDetails();
       checkConnectivity();
       dateTime();
@@ -83,13 +85,33 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncLocation();
   }, [currentCoordinates.Coordinates]);
 
+  const syncAccount = async () => {
+    const data = await readDetails();
+    executeRequest(
+      URL().syncAccount,
+      'POST',
+      JSON.stringify({accountID: data.account.accountid}),
+      async res => {
+        if (!res.loading) {
+          if (res.data.data.Location != data.location.name) {
+            data.location.name = res.data.data.Location;
+            data.location.latitude = res.data.data.latitude;
+            data.location.longitude = res.data.data.longitude;
+            data.location.radius = res.data.data.radius;
+            await writeInFile(data);
+          }
+        }
+      },
+    );
+  };
+
   const closeMenu = () => {
     setShowMenu(false);
   };
 
   const settings = () => {
     closeMenu();
-    //SHOW SETTINGS OPTIONS
+    overtimeFunction();
   };
 
   const syncActivity = async () => {
@@ -329,6 +351,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     }
   };
 
+  const syncUserDetails = async () => {};
+
   const sendTimekeepRequest = async (account, key) => {
     const valid = await isValid();
     const data = await readDetails();
@@ -424,6 +448,15 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
+    const data = await readDetails();
+    console.log(data);
+
+    overtimeFunction();
+  };
+
+  const onInfo = () => {
+    closeMenu();
+    Alert.alert('Information', 'Version: 1.0.0');
   };
 
   return (
@@ -460,6 +493,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               onSettings={settings}
               onSync={syncBtn}
               onHelp={helpMenu}
+              onInfo={onInfo}
             />
           )}
         </View>

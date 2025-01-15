@@ -164,13 +164,13 @@ const LoginScreen = ({
               return;
             }
             const DEVICE_ID = await getDeviceUniqueId();
-            // if (res.data.data.identifier !== DEVICE_ID) {
-            //   Alert.alert(
-            //     'Invalid Device',
-            //     'Please use the device you registered with',
-            //   );
-            //   return;
-            // }
+            if (res.data.data.identifier !== DEVICE_ID) {
+              Alert.alert(
+                'Invalid Device',
+                'Please use the device you registered with',
+              );
+              return;
+            }
             const {error, message} = await saveDetails(
               res.data.data,
               rememberMe,

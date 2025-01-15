@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-const NavMenu = ({onClose, onLogout, onSettings, onSync, onHelp}) => {
+const NavMenu = ({onClose, onLogout, onSettings, onSync, onHelp, onInfo}) => {
   const insets = useSafeAreaInsets();
   const statusBarHieght =
     Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight;
@@ -79,10 +79,23 @@ const NavMenu = ({onClose, onLogout, onSettings, onSync, onHelp}) => {
             }}
             onPress={onHelp}>
             <Icon
-              name="information-circle-outline"
+              name="help-outline"
               style={{marginRight: 10, color: '#333333', fontSize: 18}}
             />
             <Text style={{color: '#333333', fontSize: 16}}>Help</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              marginBottom: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            onPress={onInfo}>
+            <Icon
+              name="information-circle-outline"
+              style={{marginRight: 10, color: '#333333', fontSize: 18}}
+            />
+            <Text style={{color: '#333333', fontSize: 16}}>Info</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={{

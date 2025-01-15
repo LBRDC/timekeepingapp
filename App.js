@@ -30,8 +30,8 @@ const App = () => {
     setInterval(() => {
       requestPermission();
       isGpsEnable();
-      // devOptions();
-      // dateTime();
+      devOptions();
+      dateTime();
     }, 1000);
   }, []);
 
@@ -61,7 +61,6 @@ const App = () => {
         const request = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
-   
 
         if (request == 'never_ask_again') {
           Alert.alert(
