@@ -26,9 +26,9 @@ const App = () => {
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
   const [isAlertEnabled, setIsAlertEnabled] = useState(true);
   useEffect(() => {
-    requestPermission();
     isLoggedIn();
     setInterval(() => {
+      requestPermission();
       isGpsEnable();
       // devOptions();
       // dateTime();
@@ -61,7 +61,7 @@ const App = () => {
         const request = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
-        console.log(request);
+   
 
         if (request == 'never_ask_again') {
           Alert.alert(

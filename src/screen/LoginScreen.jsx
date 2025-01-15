@@ -245,6 +245,10 @@ const LoginScreen = ({
     }
   };
 
+  const forgotPassword = async () => {
+    Alert.alert('Notice', 'This feature is not yet available.');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle={'dark-content'} />
@@ -295,7 +299,7 @@ const LoginScreen = ({
               />
               <Text style={styles.rememberMeText}>Remember Me</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={forgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>

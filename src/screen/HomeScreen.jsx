@@ -30,12 +30,7 @@ import NavMenu from '../components/NavMenu';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
 //Helper
-import {
-  readDetails,
-  writeRecords,
-  resetRecords,
-  validateLocal,
-} from '../helper/database';
+import {readDetails, writeRecords, validateLocal} from '../helper/database';
 
 //Location
 import {getCurrentLocation} from '../services/getLocation';
@@ -44,12 +39,7 @@ import {getCurrentLocation} from '../services/getLocation';
 import {URL, executeRequest} from '../services/urls';
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
-/**
- * Functional component for the Home Screen.
- * @param {{function}} setIsAuthenticated - Function to set the authentication status.
- * @param {{object}} currentCoordinates - Object containing the current coordinates.
- * @returns JSX element representing the Home Screen UI.
- */
+
 const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [currentDateTime, setCurrentDateTime] = useState('Loading time...');
   const [location, setLocation] = useState('Loading location...');
@@ -93,7 +83,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const settings = () => {
-    closeMenu()
+    closeMenu();
     //SHOW SETTINGS OPTIONS
   };
 
@@ -256,7 +246,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   }, []);
 
   const logout = async () => {
-    closeMenu()
+    closeMenu();
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       {text: 'Cancel', onPress: () => null, style: 'cancel'},
       {text: 'Yes', onPress: () => setIsAuthenticated(false)},
@@ -388,15 +378,41 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncActivity();
   };
 
-  const syncRecords = async () => {
-    closeMenu()
+  const syncBtn = () => {
+    closeMenu();
     setShowSyncModal(true);
     // await validateLocal();
   };
 
-  const helpMenu = async ()=>{
-    closeMenu()
-  }
+  const syncRecords = async () => {
+    const validate = await validateLocal();
+    const {records} = await readDetails();
+    console.log(validate);
+
+    if (validate) {
+      executeRequest(
+        URL().syncRecords,
+        'POST',
+        JSON.stringify({records: records}),
+        res => {
+          console.log(res.data);
+          setloadermsg('Loading...');
+          setLoading(true);
+          if (!res.loading) {
+            setLoading(false);
+            if (!res.data.Error) {
+              setShowSyncModal(false);
+            }
+            Alert.alert('Timekeeping', res.data.msg);
+          }
+        },
+      );
+    }
+  };
+
+  const helpMenu = async () => {
+    closeMenu();
+  };
 
   return (
     <>
@@ -404,6 +420,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         records={records}
         visible={showSyncModal}
         onClose={setShowSyncModal}
+        SyncData={syncRecords}
       />
       <SafeAreaView style={styles.container}>
         {shown && (
@@ -429,7 +446,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               onClose={closeMenu}
               onLogout={logout}
               onSettings={settings}
-              onSync={syncRecords}
+              onSync={syncBtn}
               onHelp={helpMenu}
             />
           )}

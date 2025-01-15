@@ -5,7 +5,6 @@ const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async (data, rememberMe) => {
   const details = await readDetails();
-  console.log(USER_DATA);
 
   try {
     if (Object.values(details.account)[1].length == 0) {
@@ -106,25 +105,9 @@ export const writeRecords = async data => {
   }
 };
 
-export const resetRecords = async data => {
-  data = {
-    account: {
-      accountid: '18',
-      email: 'perpetuaedemmanuel1225@gmail.com',
-      employee: '3102',
-      identifier: '55499349-8fa9-4072-9ce5-8eef78135319',
-      location: '1083',
-      name: 'RAMOS, JOSEPH ',
-      password: 'Lbrdc2021',
-    },
-    location: {
-      latitude: '14.572732777884',
-      longitude: '120.98312437534',
-      name: '',
-      radius: '46.532275387312',
-    },
-    records: [],
-  };
+export const resetRecords = async () => {
+  const data = await readDetails();
+  data.records = [];
   const jsonData = JSON.stringify(data, null, 2);
   await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
 };
@@ -148,7 +131,9 @@ export const resetRecords = async data => {
 export const validateLocal = async () => {
   const {records} = await readDetails();
 
-  const check = records.some(rec => {
+  const check = !records.some(rec => {
     return rec.check_in.length == 0 || rec.check_out.length == 0;
   });
+
+  return check;
 };

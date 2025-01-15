@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
@@ -9,11 +9,13 @@ import {
   SafeAreaView,
 } from 'react-native';
 
-const RecordsModal = ({records, visible, onClose}) => {
+const RecordsModal = ({records, visible, onClose, SyncData}) => {
   const [selectedRecord, setSelectedRecord] = useState(null);
-  if (visible == true) {
-    console.log(records);
-  }
+  useEffect(() => {
+    if (visible == true) {
+      console.log(records);
+    }
+  }, []);
 
   function unix_to_time(unixTimestamp) {
     const date = new Date(unixTimestamp * 1000);
@@ -31,10 +33,9 @@ const RecordsModal = ({records, visible, onClose}) => {
     return formattedTime;
   }
 
-
-  const validator = (data)=>{
-    return data ? unix_to_time(data) : "--"
-  }
+  const validator = data => {
+    return data ? unix_to_time(data) : '--';
+  };
   const renderItem = ({item}) => (
     <TouchableOpacity
       style={styles.item}
@@ -85,6 +86,11 @@ const RecordsModal = ({records, visible, onClose}) => {
             style={styles.closeButton}
             onPress={() => onClose(false)}>
             <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.syncButton}
+            onPress={() => SyncData()}>
+            <Text style={styles.closeButtonText}>Sync</Text>
           </TouchableOpacity>
         </View>
 
@@ -152,7 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
-    maxHeight: '80%',
+    maxHeight: '90%',
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -207,6 +213,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#004D33',
+  },
+  syncButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#FDB913',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FDB999',
   },
   closeButtonText: {
     color: 'white',
