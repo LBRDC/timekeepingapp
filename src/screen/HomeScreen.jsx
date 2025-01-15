@@ -30,7 +30,12 @@ import NavMenu from '../components/NavMenu';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
 //Helper
-import {readDetails, writeRecords, validateLocal} from '../helper/database';
+import {
+  readDetails,
+  writeRecords,
+  validateLocal,
+  resetRecords,
+} from '../helper/database';
 
 //Location
 import {getCurrentLocation} from '../services/getLocation';
@@ -378,10 +383,15 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncActivity();
   };
 
-  const syncBtn = () => {
+  const syncBtn = async () => {
     closeMenu();
+    const {records} = await readDetails();
+
+    if (records.length <= 0) {
+      Alert.alert('Notice', 'You have no records to sync.');
+      return;
+    }
     setShowSyncModal(true);
-    // await validateLocal();
   };
 
   const syncRecords = async () => {
@@ -394,13 +404,15 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         URL().syncRecords,
         'POST',
         JSON.stringify({records: records}),
-        res => {
+        async res => {
           console.log(res.data);
           setloadermsg('Loading...');
           setLoading(true);
           if (!res.loading) {
             setLoading(false);
             if (!res.data.Error) {
+              await resetRecords();
+              syncActivity();
               setShowSyncModal(false);
             }
             Alert.alert('Timekeeping', res.data.msg);

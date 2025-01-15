@@ -22,6 +22,7 @@
 //   }
 // };
 import {GOOGLE_MAPS_API_KEY} from '@env';
+
 export const getCurrentLocation = async (latitude, longitude) => {
   try {
     const coordinates = `${latitude},${longitude}`;
