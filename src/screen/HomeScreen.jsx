@@ -43,6 +43,7 @@ import {getCurrentLocation} from '../services/getLocation';
 
 //Services
 import {URL, executeRequest} from '../services/urls';
+import SystemInfoModal from '../components/systemInfoModal';
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
 
@@ -63,6 +64,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [showMenu, setShowMenu] = useState(false);
   const [records, setRecords] = useState([]);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [appInfoModal, setAppInfoModal] = useState(false);
   useEffect(() => {
     setLoading(false);
     // requestPermission();
@@ -93,6 +95,14 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       JSON.stringify({accountID: data.account.accountid}),
       async res => {
         if (!res.loading) {
+          if (res.data.data.Status == 0) {
+            Alert.alert(
+              'Notice',
+              'Your account is deactivated. Please contact your administrator.',
+            );
+            setIsAuthenticated(false);
+          }
+
           if (res.data.data.Location != data.location.name) {
             data.location.name = res.data.data.Location;
             data.location.latitude = res.data.data.latitude;
@@ -276,7 +286,17 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     closeMenu();
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       {text: 'Cancel', onPress: () => null, style: 'cancel'},
-      {text: 'Yes', onPress: () => setIsAuthenticated(false)},
+      {
+        text: 'Yes',
+        onPress: async () => {
+          const data = await readDetails();
+          setIsAuthenticated(false);
+          if (data.rememberMe == true) {
+            data.rememberMe = false;
+            await writeInFile(data);
+          }
+        },
+      },
     ]);
   };
 
@@ -421,7 +441,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const syncRecords = async () => {
     const validate = await validateLocal();
     const {records} = await readDetails();
-    console.log(validate);
 
     if (validate) {
       executeRequest(
@@ -443,6 +462,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
           }
         },
       );
+    } else {
+      Alert.alert(
+        'Notice',
+        'Your record is incomplete please contact your HR.',
+      );
     }
   };
 
@@ -456,7 +480,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const onInfo = () => {
     closeMenu();
-    Alert.alert('Information', 'Version: 1.0.0');
+    setAppInfoModal(true);
   };
 
   return (
@@ -467,6 +491,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         onClose={setShowSyncModal}
         SyncData={syncRecords}
       />
+      <SystemInfoModal visible={appInfoModal} onClose={setAppInfoModal} />
       <SafeAreaView style={styles.container}>
         {shown && (
           <PasswordInputModal
