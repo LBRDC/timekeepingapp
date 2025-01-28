@@ -17,6 +17,7 @@ import {
 import React, {useState, useEffect} from 'react';
 import * as turf from '@turf/turf';
 import DeviceInfo from 'react-native-device-info';
+import CryptoJS from 'crypto-js';
 //ICON
 import Icon from 'react-native-vector-icons/Ionicons';
 //COMPONENTS

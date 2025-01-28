@@ -143,13 +143,18 @@ const LoginScreen = ({
           setLoading(false);
           if (!res.error && !res.data.Error) {
             //Login Success
+            console.log(res.data.data);
+            
             setAccountID(res.data.data.accountID);
             setAccPassword(res.data.data.Password);
             if (res.data.data.Email.length === 0) {
               navigation.navigate('EmailBox');
               return;
             }
-            if (res.data.data.Password == 'LBRDC') {
+            if (
+              res.data.data.Password ==
+              'cea0cc97fbc0829268790a1773ee637416b3611f2e1c2c4825a186486fa1c4c9'
+            ) {
               navigation.navigate('ChangePassword');
               return;
             }
@@ -181,7 +186,7 @@ const LoginScreen = ({
             }
             setIsAuthenticated(true);
           } else {
-            Alert.alert('Ooops!', res.data);
+            Alert.alert('Ooops!', res.data.msg);
           }
         }
       },

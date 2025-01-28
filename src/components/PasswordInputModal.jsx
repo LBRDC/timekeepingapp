@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import CryptoJS from 'crypto-js';
 
 const PasswordInputModal = ({onClose, onSubmit, isShown, modalKey}) => {
   const [password, setPassword] = useState('');
@@ -15,7 +16,7 @@ const PasswordInputModal = ({onClose, onSubmit, isShown, modalKey}) => {
   const title = raw_title.charAt(0).toUpperCase() + raw_title.slice(1);
   const handleSubmit = () => {
     if (password) {
-      onSubmit(password, modalKey);
+      onSubmit(CryptoJS.SHA256(password).toString(), modalKey);
       isShown(false);
       setPassword('');
     } else {
