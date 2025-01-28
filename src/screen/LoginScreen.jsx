@@ -13,9 +13,9 @@ import {
   Alert,
   PermissionsAndroid,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, act} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import RNFS from 'react-native-fs';
+import RNFS, {writeFile} from 'react-native-fs';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
 const logo = require('../assets/animatedLogo.gif');
 const {width, height} = Dimensions.get('window');
@@ -25,16 +25,22 @@ import InputText from '../components/InputText';
 import Button from '../components/Button';
 import Loader from '../components/Loader';
 import CTextInput from '../components/CTextInput';
-
 //Services
 import {URL, executeRequest} from '../services/urls';
 
 //Helper
-import {syncAccount} from '../helper/database';
-
-const databaseFilePath = `${RNFS.DocumentDirectoryPath}/mobile_timekeeping.db`;
+import {
+  saveDetails,
+  checkDatasetExists,
+  readDetails,
+  writeInFile,
+} from '../helper/database';
+import {getDeviceUniqueId} from '../helper/DeveloperOptions';
+const datasetFilePath = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 const fileUrl =
-  'https://www.dropbox.com/scl/fi/8ev6f115s7igu7gulm600/mobile_timekeeping.db?rlkey=xfbttezo7m2eei61j02eo4icy&st=1hdi0m1z&dl=1';
+  'https://www.dropbox.com/scl/fi/zxswy1jis5r5uq89epu5l/timekeeping_data.json?rlkey=2cg0pkhw4xksat6e5wchyz5cs&st=z5p4owti&dl=1';
+// const fileUrl =
+//   'https://www.dropbox.com/scl/fi/8ev6f115s7igu7gulm600/mobile_timekeeping.db?rlkey=xfbttezo7m2eei61j02eo4icy&st=1hdi0m1z&dl=1';
 const LoginScreen = ({
   navigation,
   setIsAuthenticated,
@@ -46,6 +52,7 @@ const LoginScreen = ({
   const [rememberMe, setRememberMe] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
   // const [isDownloading, setIsDownloading] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [loadermsg, setloadermsg] = useState('Downloading...');
   const [showPassword, setShowPassword] = useState(false);
@@ -56,8 +63,8 @@ const LoginScreen = ({
   }, []);
 
   const init = async () => {
-    const dbExist = await checkDatabaseExists();
-    if (!dbExist) {
+    const dataset = await checkDatasetExists();
+    if (!dataset) {
       Alert.alert(
         'Notice',
         'We need to sync dataset in order to use this app.',
@@ -73,23 +80,30 @@ const LoginScreen = ({
     }
   };
 
-  const checkDatabaseExists = async () => {
-    try {
-      const fileExists = await RNFS.exists(databaseFilePath);
-      return fileExists;
-    } catch (error) {
-      console.error('Error checking database existence:', error);
-      return false;
+  const loginOffline = async () => {
+    const data = await readDetails();
+
+    if (
+      data.account.employee == idNumber &&
+      data.account.password == password
+    ) {
+      if (data.rememberMe != rememberMe) {
+        data.rememberMe = rememberMe;
+        writeInFile(data);
+      }
+      setIsAuthenticated(true);
+    } else {
+      Alert.alert('Ooops!', 'Incorrect Password');
     }
   };
 
   const login = async () => {
-    const dbExist = await checkDatabaseExists();
-    if (!dbExist) {
+    const dsExist = await checkDatasetExists();
+    if (!dsExist) {
       init();
       return;
     }
-    if (!dbExist) {
+    if (!dsExist) {
       return;
     }
 
@@ -98,10 +112,30 @@ const LoginScreen = ({
       return;
     }
 
+    const active = await isOnline();
+    const data = await readDetails();
+    console.log(active);
+
+    if (!active && dsExist && !data.account.employee) {
+      Alert.alert(
+        'Notice',
+        'In order to enable offline features you need to login as online user first.',
+      );
+      return;
+    }
+
+    if (!active) {
+      Alert.alert('No Internet', 'You will login as offline mode', [
+        {text: 'OK', onPress: () => loginOffline()},
+        {text: 'Cancel', onPress: () => null},
+      ]);
+      return;
+    }
+
     executeRequest(
       URL().login,
       'POST',
-      JSON.stringify({username: idNumber, password: password}),
+      JSON.stringify({username: idNumber.trim(), password: password.trim()}),
       async res => {
         setloadermsg('Loading...');
         setLoading(true);
@@ -109,19 +143,47 @@ const LoginScreen = ({
           setLoading(false);
           if (!res.error && !res.data.Error) {
             //Login Success
-            // console.log(res.data);
+            console.log(res.data.data);
+            
             setAccountID(res.data.data.accountID);
             setAccPassword(res.data.data.Password);
             if (res.data.data.Email.length === 0) {
               navigation.navigate('EmailBox');
               return;
             }
-            if (res.data.data.Password == 'LBRDC') {
+            if (
+              res.data.data.Password ==
+              'cea0cc97fbc0829268790a1773ee637416b3611f2e1c2c4825a186486fa1c4c9'
+            ) {
               navigation.navigate('ChangePassword');
               return;
             }
-            console.log(res.data.data);
-            await syncAccount(res.data.data);
+
+            if (res.data.data.identifier.length == 0) {
+              navigation.navigate('RegDevice');
+              return;
+            }
+
+            if (res.data.data.Status == 0) {
+              Alert.alert('Account Problem', 'Account is deactivated');
+              return;
+            }
+            const DEVICE_ID = await getDeviceUniqueId();
+            if (res.data.data.identifier !== DEVICE_ID) {
+              Alert.alert(
+                'Invalid Device',
+                'Please use the device you registered with',
+              );
+              return;
+            }
+            const {error, message} = await saveDetails(
+              res.data.data,
+              rememberMe,
+            );
+            if (error) {
+              Alert.alert('Error', message);
+              return;
+            }
             setIsAuthenticated(true);
           } else {
             Alert.alert('Ooops!', res.data.msg);
@@ -132,12 +194,17 @@ const LoginScreen = ({
   };
 
   const checkConnectivity = async () => {
+    const dataset = await checkDatasetExists();
     try {
       const req = await fetch('https://www.google.com');
       if (req.ok) {
-        downloadDB();
+        setIsConnected(true);
+        if (!dataset) {
+          downloadDB();
+        }
       }
     } catch (error) {
+      setIsConnected(false);
       Alert.alert(
         'No Internet',
         'You need an internet connection to download dataset.',
@@ -145,22 +212,30 @@ const LoginScreen = ({
     }
   };
 
+  const isOnline = async () => {
+    try {
+      const req = await fetch('https://www.google.com');
+      if (req.ok) {
+        return true;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+
   const downloadDB = async () => {
     try {
-      // setIsDownloading(true);
       setloadermsg('Downloading...');
       setLoading(true);
       const downloadResult = await RNFS.downloadFile({
         fromUrl: fileUrl,
-        toFile: databaseFilePath,
+        toFile: datasetFilePath,
       }).promise;
 
       if (downloadResult.statusCode === 200) {
-        // setIsDownloading(false);
         setLoading(false);
         Alert.alert('Success', 'Dataset downloaded successfully!');
       } else {
-        // setIsDownloading(false);
         setLoading(false);
         console.error(
           'Download failed with status code:',
@@ -169,11 +244,14 @@ const LoginScreen = ({
         Alert.alert('Error', 'Download failed!');
       }
     } catch (error) {
-      // setIsDownloading(false);
       setLoading(false);
       console.error('Error downloading database:', error);
       Alert.alert('Error', 'Error downloading database!');
     }
+  };
+
+  const forgotPassword = async () => {
+    Alert.alert('Notice', 'This feature is not yet available.');
   };
 
   return (
@@ -226,7 +304,7 @@ const LoginScreen = ({
               />
               <Text style={styles.rememberMeText}>Remember Me</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={forgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>

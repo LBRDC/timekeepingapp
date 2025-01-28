@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CTextInput from '../components/CTextInput';
-
+import CryptoJS from 'crypto-js';
 //Components
 import Loader from '../components/Loader';
 
@@ -36,7 +36,7 @@ export default function PasswordChangeForm({navigation, password, accountID}) {
   };
 
   const handleSubmit = () => {
-    if (currentPassword != password) {
+    if (CryptoJS.SHA256(currentPassword).toString() != password) {
       Alert.alert('Error', 'Incorrect current password');
       return;
     }
@@ -59,6 +59,8 @@ export default function PasswordChangeForm({navigation, password, accountID}) {
         setloadermsg('Changing password...');
         setLoading(true);
         if (!res.loading) {
+          console.log(res.data);
+
           setLoading(false);
           if (!res.data.Error) {
             navigation.navigate('Login');

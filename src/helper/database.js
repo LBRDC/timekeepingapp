@@ -1,107 +1,140 @@
 /* eslint-disable prettier/prettier */
-import SQLite from 'react-native-sqlite-storage';
-import RNFS from 'react-native-fs';
+import RNFS, {read} from 'react-native-fs';
 
-SQLite.enablePromise(true);
-const dbPath = `${RNFS.DocumentDirectoryPath}/mobile_timekeeping.db`;
+const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
-export const openDatabase = async () => {
-  const db = await SQLite.openDatabase({
-    name: dbPath,
-    location: 'default',
-    createFromLocation: 1,
-  });
-  console.log('Database opened successfully');
-  return db;
+export const saveDetails = async (data, rememberMe) => {
+  const details = await readDetails();
+  // console.log(USER_DATA);
+
+  try {
+    if (Object.values(details.account)[1].length == 0) {
+      await writeDetails(data, rememberMe);
+    } else {
+      if (details.rememberMe != rememberMe) {
+        details.rememberMe = rememberMe;
+        await writeInFile(details);
+      }
+    }
+    return {error: false, message: 'Details saved'};
+  } catch (error) {
+    return {error: true, message: 'Error saving details'};
+  }
 };
 
-export const fetchAddress = async () => {
-  const db = await openDatabase();
+export const checkDatasetExists = async () => {
   try {
-    console.log('fetching...');
+    const fileExists = await RNFS.exists(USER_DATA);
+    return fileExists;
+  } catch (error) {
+    console.error('Error checking database existence:', error);
+    return false;
+  }
+};
 
-    db.transaction(tx => {
-      tx.executeSql(
-        'SELECT * FROM addresses where latitude=?',
-        ['14.7418267'],
-        (tx, results) => {
-          const rows = results.rows;
-          console.log(rows.item(0));
-        },
-      );
-    });
+export const readDetails = async () => {
+  try {
+    const raw = await RNFS.readFile(USER_DATA, 'utf8');
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Error reading JSON data:', error);
+    return null;
+  }
+};
+
+export const writeLocation = async data => {
+  try {
+    const details = await readDetails();
+    details.location.latitude = data.latitude;
+    details.location.longitude = data.longitude;
+    details.location.radius = data.radius;
+    details.location.name = data.name;
+    const jsonData = JSON.stringify(details, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing JSON data:', error);
+    return false;
+  }
+};
+
+export const writeInFile = async data => {
+  try {
+    const jsonData = JSON.stringify(data, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
   } catch (error) {
     console.log(error);
   }
 };
 
-export const syncAccount = async user => {
-  const db = await openDatabase();
+export const writeDetails = async (data, rememberMe) => {
   try {
-    db.transaction(tx => {
-      tx.executeSql(
-        'DELETE FROM account',
-        [],
-        () => {
-          console.log('accounts deleted');
-          tx.executeSql(
-            'INSERT INTO account(accountId, employee, name, location, email, password) VALUES (?,?,?,?,?,?)',
-            [
-              user.accountID,
-              user.EmployeeID,
-              user.name,
-              user.LocationID,
-              user.Email,
-              user.Password,
-            ],
-            () => {
-              tx.executeSql(
-                'INSERT INTO location(name, latitude, longitude, radius) VALUES (?,?,?,?)',
-                [user.Location, user.latitude, user.longitude, user.radius],
-                () => {
-                  console.log('User synced successfully');
-                },
-                (tx, error) => {
-                  console.error('Error Inserting Location:', error);
-                  tx.rollback();
-                },
-              );
-            },
-            (tx, error) => {
-              console.error('Error inserting user:', error);
-              tx.rollback();
-            },
-          );
-        },
-        (tx, error) => {
-          console.error('Error deleting accounts:', error);
-          tx.rollback();
-        },
-      );
-    });
+    const details = await readDetails();
+    //Account
+    details.account.accountid = data.accountID;
+    details.account.email = data.Email;
+    details.account.employee = data.EmployeeID;
+    details.account.location = data.LocationID;
+    details.account.identifier = data.identifier;
+    details.account.password = data.Password;
+    details.account.name = data.name;
+    //Location
+    details.location.latitude = data.latitude;
+    details.location.longitude = data.longitude;
+    details.location.radius = data.radius;
+    details.location.name = data.Location;
+    //Remember user
+    details.rememberMe = rememberMe;
+
+    const jsonData = JSON.stringify(details, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+    return true;
   } catch (error) {
-    console.log(error);
+    console.error('Error writing JSON data:', error);
+    return false;
   }
 };
 
-export const userDetails = async () => {
-  const db = await openDatabase();
-  return new Promise((resolve, reject) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'select * from account',
-        [],
-        (tx, result) => {
-          resolve(result.rows.item(0));
-        },
-        (tx, error) => {
-          reject(error);
-        },
-      );
-    });
-  });
+export const writeRecords = async data => {
+  try {
+    const jsonData = JSON.stringify(data, null, 2);
+    await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+    return true;
+  } catch (error) {
+    console.error('Error writing JSON data:', error);
+    return false;
+  }
 };
 
-export const removeDb = async () => {
-  await RNFS.unlink(dbPath);
+export const resetRecords = async () => {
+  const data = await readDetails();
+  data.records = [];
+  const jsonData = JSON.stringify(data, null, 2);
+  await RNFS.writeFile(USER_DATA, jsonData, 'utf8');
+};
+
+// export const removeDb = async () => {
+//   await RNFS.unlink(dbPath);
+// };
+
+// export const copyDB = async () => {
+//   const externalPath = `${RNFS.DownloadDirectoryPath}/timekeeping_data.json`;
+//   try {
+//     await RNFS.copyFile(dbPath, externalPath);
+//     console.log('File copied to:', externalPath);
+//     // Alert.alert('File Copied', `File copied to: ${externalPath}`);
+//   } catch (error) {
+//     console.error('Error copying file:', error);
+//     // Alert.alert('Error', `Failed to copy file: ${error.message}`);
+//   }
+// };
+
+export const validateLocal = async () => {
+  const {records} = await readDetails();
+
+  const check = !records.some(rec => {
+    return rec.check_in.length == 0 || rec.check_out.length == 0;
+  });
+
+  return check;
 };

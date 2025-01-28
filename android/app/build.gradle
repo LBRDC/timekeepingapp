@@ -134,6 +134,16 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+
+  signingConfigs {
+        release {
+            storeFile file("tk-release.keystore")
+            storePassword "Lbrdc2021"
+            keyAlias "mykeystore"
+            keyPassword "Lbrdc2021"
+        }
+    }
+
     defaultConfig {
         applicationId "com.timekeeping"
         minSdkVersion rootProject.ext.minSdkVersion
