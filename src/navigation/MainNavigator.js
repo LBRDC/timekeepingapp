@@ -25,6 +25,7 @@ const MainNavigator = ({setIsAuthenticated}) => {
       position => {
         const {latitude, longitude} = position.coords;
         const str = `${latitude}, ${longitude}`;
+
         setLocation(prev => ({
           ...prev,
           Latitude: latitude,

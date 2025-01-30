@@ -114,7 +114,7 @@ export async function executeRequest(
   } catch (error) {
     // Clear the timeout in case of an error
     clearTimeout(timeoutId);
-    console.log(error);
+    // console.log(error);
 
     // Handle specific errors
     if (error.name === 'AbortError') {

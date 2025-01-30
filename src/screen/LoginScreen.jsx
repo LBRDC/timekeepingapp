@@ -114,7 +114,7 @@ const LoginScreen = ({
 
     const active = await isOnline();
     const data = await readDetails();
-    console.log(active);
+
 
     if (!active && dsExist && !data.account.employee) {
       Alert.alert(
@@ -143,8 +143,7 @@ const LoginScreen = ({
           setLoading(false);
           if (!res.error && !res.data.Error) {
             //Login Success
-            console.log(res.data.data);
-            
+
             setAccountID(res.data.data.accountID);
             setAccPassword(res.data.data.Password);
             if (res.data.data.Email.length === 0) {
