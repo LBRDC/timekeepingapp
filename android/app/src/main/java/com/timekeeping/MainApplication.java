@@ -1,5 +1,7 @@
 package com.timekeeping;
 import com.timekeeping.DeveloperOptionsPackage;
+import com.timekeeping.BackgroundTaskPackage;
+
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
@@ -29,6 +31,7 @@ public class MainApplication extends Application implements ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // packages.add(new MyReactNativePackage());
            packages.add(new DeveloperOptionsPackage()); 
+           packages.add(new BackgroundTaskPackage());
           return packages;
         }
 
