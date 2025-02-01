@@ -1,51 +1,48 @@
 import {NavigationContainer} from '@react-navigation/native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import DeviceInfo from 'react-native-device-info';
 import JailMonkey from 'jail-monkey';
-
-//COMPONENTS
+// COMPONENTS
 import LocationError from './src/components/LocationError';
 import DeveloperEnabled from './src/components/DeveloperEnabled';
-//Navigator
+import DateTimeError from './src/components/DateTimeError';
+
+// NAVIGATORS
 import MainNavigator from './src/navigation/MainNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
-//GEOLOCATION
+// GEOLOCATION
 import Geolocation from 'react-native-geolocation-service';
 import {Platform, Alert, PermissionsAndroid, Linking} from 'react-native';
 import {
   checkAutoDateTime,
   checkAutoTimeZone,
 } from './src/helper/DeveloperOptions';
-import DateTimeError from './src/components/DateTimeError';
 import {checkDatasetExists, readDetails} from './src/helper/database';
+
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [locStatus, setLocStatus] = useState(true);
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
-  const [isAlertEnabled, setIsAlertEnabled] = useState(true);
+  const intervalIdRef = useRef(null);
   useEffect(() => {
     isLoggedIn();
-    setInterval(() => {
+    intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
       devOptions();
       dateTime();
     }, 1000);
+
+    return () => clearInterval(intervalIdRef.current);
   }, []);
 
-  //FUNCTIONS
   const isGpsEnable = async () => {
     if (Platform.OS === 'ios') {
       const authStatus = await Geolocation.requestAuthorization('whenInUse');
-      if (authStatus === 'granted') {
-        setLocStatus(true);
-      } else {
-        setLocStatus(false);
-      }
-    }
-    if (Platform.OS === 'android') {
+      setLocStatus(authStatus === 'granted');
+    } else if (Platform.OS === 'android') {
       const isLocationEnabled = await DeviceInfo.isLocationEnabled();
       setLocStatus(isLocationEnabled);
     }
@@ -56,13 +53,13 @@ const App = () => {
       const check = await PermissionsAndroid.check(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
-
       if (!check) {
         const request = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
 
-        if (request == 'never_ask_again') {
+        if (request === 'never_ask_again') {
+          clearInterval(intervalIdRef.current);
           Alert.alert(
             'Required',
             'In order to use timekeeping you need to enable location permission in app settings',
@@ -70,16 +67,20 @@ const App = () => {
               {
                 text: 'Ok',
                 onPress: () => {
-                  setIsAlertEnabled(false);
                   Linking.openSettings();
-                  setInterval(() => {
+                  intervalIdRef.current = setInterval(() => {
                     requestPermission();
-                  }, 3000);
+                  }, 1000);
                 },
               },
             ],
           );
-        } else if (request != 'granted') {
+        } else if (request !== 'granted') {
+          intervalIdRef.current = setInterval(() => {
+            isGpsEnable();
+            devOptions();
+            dateTime();
+          }, 1000);
           Alert.alert(
             'Required',
             'In order to use timekeeping you need to enable location permission',
@@ -96,15 +97,10 @@ const App = () => {
   };
 
   const dateTime = async () => {
-    if (Platform.OS == 'android') {
+    if (Platform.OS === 'android') {
       const date = await checkAutoDateTime();
       const timezone = await checkAutoTimeZone();
-
-      if (!date || !timezone) {
-        setIsAutoDateTime(false);
-      } else {
-        setIsAutoDateTime(true);
-      }
+      setIsAutoDateTime(date && timezone);
     }
   };
 
@@ -112,22 +108,22 @@ const App = () => {
     const check = await checkDatasetExists();
     if (check) {
       const data = await readDetails();
-      if (data.rememberMe == true) {
+      if (data.rememberMe) {
         setIsAuthenticated(true);
       }
     }
   };
-  const NavContainer = () => {
-    return (
-      <NavigationContainer>
-        {isAuthenticated ? (
-          <MainNavigator setIsAuthenticated={setIsAuthenticated} />
-        ) : (
-          <AuthNavigator setIsAuthenticated={setIsAuthenticated} />
-        )}
-      </NavigationContainer>
-    );
-  };
+
+  const NavContainer = () => (
+    <NavigationContainer>
+      {isAuthenticated ? (
+        <MainNavigator setIsAuthenticated={setIsAuthenticated} />
+      ) : (
+        <AuthNavigator setIsAuthenticated={setIsAuthenticated} />
+      )}
+    </NavigationContainer>
+  );
+
   return (
     <>
       {isDebugMode ? (

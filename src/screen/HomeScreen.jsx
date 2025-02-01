@@ -47,7 +47,6 @@ import {URL, executeRequest} from '../services/urls';
 import SystemInfoModal from '../components/systemInfoModal';
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
-
 const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [currentDateTime, setCurrentDateTime] = useState('Loading time...');
   const [location, setLocation] = useState('Loading location...');
@@ -66,18 +65,17 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [records, setRecords] = useState([]);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [appInfoModal, setAppInfoModal] = useState(false);
+
   useEffect(() => {
     setLoading(false);
-    // requestPermission();
     syncLocation();
     syncActivity();
-    // loadDetails();
     const timer = setInterval(() => {
       syncAccount();
       loadDetails();
       checkConnectivity();
       dateTime();
-    }, 1000);
+    }, 2000);
     return () => {
       clearInterval(timer);
       backhandler.remove();
@@ -90,13 +88,14 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const syncAccount = async () => {
     const data = await readDetails();
+    if (!isConnected) return;
     executeRequest(
       URL().syncAccount,
       'POST',
       JSON.stringify({accountID: data.account.accountid}),
       async res => {
         if (!res.loading) {
-          if (res.data.data.Status == 0) {
+          if (res.data.data?.Status == 0) {
             Alert.alert(
               'Notice',
               'Your account is deactivated. Please contact your administrator.',
@@ -104,11 +103,12 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
             setIsAuthenticated(false);
           }
 
+          if (!res.data.data?.Location) return;
           if (res.data.data.Location != data.location.name) {
-            data.location.name = res.data.data.Location;
-            data.location.latitude = res.data.data.latitude;
-            data.location.longitude = res.data.data.longitude;
-            data.location.radius = res.data.data.radius;
+            data.location.name = res.data.data?.Location;
+            data.location.latitude = res.data.data?.latitude;
+            data.location.longitude = res.data.data?.longitude;
+            data.location.radius = res.data.data?.radius;
             await writeInFile(data);
           }
         }
@@ -132,61 +132,69 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     const data = [
       {
         title: 'Check In',
-        time: res?.check_in != null ? unix_to_time(res.check_in) : 'N/A',
-        date: res?.check_in != null ? unix_to_date(res.check_in) : '',
+        time: unix_to_time(res?.check_in),
+        date: unix_to_date(res?.check_in),
       },
       {
         title: 'Break Out',
-        time: res?.break_out != null ? unix_to_time(res.break_out) : 'N/A',
-        date: res?.break_out != null ? unix_to_date(res.break_out) : '',
+        time: unix_to_time(res?.break_out),
+        date: unix_to_date(res?.break_out),
       },
       {
         title: 'Break In',
-        time: res?.break_in != null ? unix_to_time(res.break_in) : 'N/A',
-        date: res?.break_in != null ? unix_to_date(res.break_in) : '',
+        time: unix_to_time(res?.break_in),
+        date: unix_to_date(res?.break_in),
       },
       {
         title: 'Check Out',
-        time: res?.check_out != null ? unix_to_time(res.check_out) : 'N/A',
-        date: res?.check_out != null ? unix_to_date(res.check_out) : '',
+        time: unix_to_time(res?.check_out),
+        date: unix_to_date(res?.check_out),
       },
       {
         title: 'OT In',
-        time: res?.ot_in != null ? unix_to_time(res.ot_in) : 'N/A',
-        date: res?.ot_in != null ? unix_to_date(res.ot_in) : '',
+        time: unix_to_time(res?.ot_in),
+        date: unix_to_date(res?.ot_in),
       },
       {
         title: 'OT Out',
-        time: res?.ot_out != null ? unix_to_time(res.ot_out) : 'N/A',
-        date: res?.ot_out != null ? unix_to_date(res.ot_out) : '',
+        time: unix_to_time(res?.ot_out),
+        date: unix_to_date(res?.ot_out),
       },
     ];
     setRecentActivity(data);
   };
 
-  function unix_to_time(unixTimestamp) {
-    const date = new Date(unixTimestamp * 1000);
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const seconds = date.getSeconds();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const formattedTime = `${hours}:${String(minutes).padStart(
-      2,
-      '0',
-    )}:${String(seconds).padStart(2, '0')} ${ampm}`;
+  function unix_to_time(res) {
+    if (res.length != 0) {
+      const date = new Date(res * 1000);
+      let hours = date.getHours();
+      const minutes = date.getMinutes();
+      const seconds = date.getSeconds();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const formattedTime = `${hours}:${String(minutes).padStart(
+        2,
+        '0',
+      )}:${String(seconds).padStart(2, '0')} ${ampm}`;
 
-    return formattedTime;
+      return formattedTime;
+    } else {
+      return 'N/A';
+    }
   }
 
-  function unix_to_date(unixTimestamp) {
-    const date = new Date(unixTimestamp * 1000);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${month}-${day}-${year}`;
-    return formattedDate;
+  function unix_to_date(res) {
+    if (res.length != 0) {
+      const date = new Date(res * 1000);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${month}-${day}-${year}`;
+      return formattedDate;
+    } else {
+      return '';
+    }
   }
 
   const syncLocation = async () => {
@@ -280,6 +288,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     setRefreshing(true);
     syncLocation();
     syncActivity();
+    loadDetails();
     setRefreshing(false);
   }, []);
 
@@ -372,8 +381,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     }
   };
 
-  const syncUserDetails = async () => {};
-
   const sendTimekeepRequest = async (account, key) => {
     const valid = await isValid();
     const data = await readDetails();
@@ -396,11 +403,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       data.records.push({
         accountID: account,
         check_in: unix,
-        check_out: null,
-        break_in: null,
-        break_out: null,
-        ot_in: null,
-        ot_out: null,
+        check_out: '',
+        break_in: '',
+        break_out: '',
+        ot_in: '',
+        ot_out: '',
         date: curr_date,
       });
       const writing = await writeRecords(data);
@@ -410,6 +417,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     } else {
       //find check in record base on date today
       const record = data.records.find(record => record.date === curr_date);
+      console.log(record);
+
       if (data.records.length === 0 || record === undefined) {
         Alert.alert('Error', 'No check in record found.');
         return;
@@ -442,14 +451,12 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const syncRecords = async () => {
     const validate = await validateLocal();
     const {records} = await readDetails();
-
     if (validate) {
       executeRequest(
         URL().syncRecords,
         'POST',
         JSON.stringify({records: records}),
         async res => {
-          console.log(res.data);
           setloadermsg('Loading...');
           setLoading(true);
           if (!res.loading) {
@@ -474,7 +481,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const helpMenu = async () => {
     closeMenu();
     const data = await readDetails();
-    console.log(data);
+    console.log(isConnected);
 
     overtimeFunction();
   };
