@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Modal, View, Text, StyleSheet} from 'react-native';
 
-const CountdownModal = ({visible, onClose, initialTime}) => {
+const CountdownModal = ({visible, onClose, initialTime, status}) => {
   const formatTime = seconds => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -22,6 +22,9 @@ const CountdownModal = ({visible, onClose, initialTime}) => {
           <Text style={styles.instructionText}>
             Please stay within the vicinity for the specified time to mark your
             check-in.
+          </Text>
+          <Text style={[styles.statusText, {color: !status ? 'green' : 'red'}]}>
+            Status: {!status ? 'Within Vicinity' : 'Outside Vicinity'}
           </Text>
         </View>
       </View>
@@ -54,6 +57,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     color: 'gray',
+  },
+  statusText: {
+    fontSize: 16,
+    marginTop: 10,
   },
 });
 

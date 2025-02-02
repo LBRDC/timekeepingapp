@@ -74,7 +74,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     Latitude: null,
     Longitude: null,
   });
-
+  const alerted = useRef(false);
+  const isback = useRef(false);
   useEffect(() => {
     const watchId = Geolocation.watchPosition(
       position => {
@@ -302,7 +303,6 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       turf.point(geofenceCenter),
       {units: 'meters'},
     );
-    console.log(currentCoordinates);
 
     return distance <= geofenceRadius;
   };
@@ -410,9 +410,9 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const _10mins = async () => {
     const {location} = await readDetails();
-    let alerted = false;
+
     return new Promise(resolve => {
-      let timer = 10 * 60; // 10 minutes in seconds
+      let timer = 1 * 60; // 10 minutes in seconds
       const interval = setInterval(() => {
         if (
           mycoords.current.Latitude === null ||
@@ -433,29 +433,24 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
           turf.point(geofenceCenter),
           {units: 'meters'},
         );
-        console.log(userLocation);
 
         if (distance > geofenceRadius) {
           if (!isPaused) {
             setIsPaused(true);
-            setTimer(10 * 60); // Reset the timer if the user is out of vicinity
-            if (!alerted) {
-              Alert.alert('Oopss', 'You are out of vicinity.');
-              alerted = true;
-            }
-
-            alerted = true;
+            setTimer(1 * 60);
+            timer = 1 * 60; // Reset the timer if the user is out of vicinity
           }
         } else {
           if (isPaused) {
             setIsPaused(false);
-            timer = 10 * 60;
-            setTimer(10 * 60); // Reset the timer if the user is out of vicinity
-            alerted = false;
+            timer = 1 * 60; // Reset the timer when the user comes back into the vicinity
+            setTimer(1 * 60);
           }
           timer -= 1;
           setTimer(timer);
+          setIsPaused(false);
           if (timer <= 0) {
+            setIsPaused(false);
             clearInterval(interval);
             resolve(true);
           }
@@ -491,7 +486,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       }
 
       console.log('PASS');
-
+      setCountdownModal(false);
       return;
       data.records.push({
         accountID: account,
@@ -598,6 +593,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         visible={countdownModal}
         onClose={() => setCountdownModal(false)}
         initialTime={timer}
+        status={isPaused}
       />
       <SystemInfoModal visible={appInfoModal} onClose={setAppInfoModal} />
       <SafeAreaView style={styles.container}>
