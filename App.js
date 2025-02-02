@@ -31,7 +31,7 @@ const App = () => {
     intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
-      devOptions();
+      //devOptions();
       dateTime();
     }, 1000);
 
