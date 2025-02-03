@@ -138,9 +138,9 @@ android {
   signingConfigs {
         release {
             storeFile file("tk-release.keystore")
-            storePassword "Lbrdc2021"
+            storePassword "122512"
             keyAlias "mykeystore"
-            keyPassword "Lbrdc2021"
+            keyPassword "122512"
         }
     }
 
