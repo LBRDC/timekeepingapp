@@ -2,6 +2,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect, useState, useRef} from 'react';
 import DeviceInfo from 'react-native-device-info';
 import JailMonkey from 'jail-monkey';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // COMPONENTS
 import LocationError from './src/components/LocationError';
 import DeveloperEnabled from './src/components/DeveloperEnabled';
@@ -27,16 +28,31 @@ const App = () => {
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
   const intervalIdRef = useRef(null);
   useEffect(() => {
+    checkLocal();
     isLoggedIn();
     intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
-      devOptions();
+      //devOptions();
       dateTime();
     }, 1000);
 
     return () => clearInterval(intervalIdRef.current);
   }, []);
+
+  const checkLocal = async () => {
+    try {
+      const value = await AsyncStorage.getItem('isFisrtTime');
+      if (value === null) {
+        await AsyncStorage.setItem('isFisrtTime', 'true');
+        console.log(value);
+      }
+    } catch (e) {
+      console.log(e);
+
+      // saving error
+    }
+  };
 
   const isGpsEnable = async () => {
     if (Platform.OS === 'ios') {

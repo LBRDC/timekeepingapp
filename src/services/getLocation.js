@@ -30,7 +30,6 @@ export const getCurrentLocation = async (latitude, longitude) => {
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coordinates}&key=${GOOGLE_MAPS_API_KEY}`,
     );
     const result = await loc_details.json();
-
     return result;
   } catch (error) {
     return 'failed to get location: ', error;

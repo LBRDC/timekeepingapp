@@ -14,10 +14,11 @@ import {
   Linking,
   Modal,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import * as turf from '@turf/turf';
 import DeviceInfo from 'react-native-device-info';
 import CryptoJS from 'crypto-js';
+import Geolocation from 'react-native-geolocation-service';
 //ICON
 import Icon from 'react-native-vector-icons/Ionicons';
 //COMPONENTS
@@ -26,6 +27,7 @@ import PasswordInputModal from '../components/PasswordInputModal';
 import RecordsModal from '../components/RecordsModal';
 import Loader from '../components/Loader';
 import NavMenu from '../components/NavMenu';
+import CountdownModal from '../components/CountdownModal';
 //GEOLOCATION
 //BIOMETRICS
 import ReactNativeBiometrics from 'react-native-biometrics';
@@ -65,6 +67,34 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [records, setRecords] = useState([]);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [appInfoModal, setAppInfoModal] = useState(false);
+  const [countdownModal, setCountdownModal] = useState(false);
+  const [timer, setTimer] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+  const mycoords = useRef({
+    Latitude: null,
+    Longitude: null,
+  });
+  const alerted = useRef(false);
+  const isback = useRef(false);
+  useEffect(() => {
+    const watchId = Geolocation.watchPosition(
+      position => {
+        console.log(
+          'Position updated:',
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+        mycoords.current = {
+          Latitude: position.coords.latitude,
+          Longitude: position.coords.longitude,
+        };
+      },
+      error => console.log(error),
+      {enableHighAccuracy: true, distanceFilter: 1},
+    );
+
+    return () => Geolocation.clearWatch(watchId);
+  }, []);
 
   useEffect(() => {
     setLoading(false);
@@ -122,7 +152,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const settings = () => {
     closeMenu();
-    overtimeFunction();
+    // overtimeFunction();
+    setCountdownModal(true);
   };
 
   const syncActivity = async () => {
@@ -273,11 +304,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       {units: 'meters'},
     );
 
-    if (distance <= geofenceRadius) {
-      return true;
-    } else {
-      return false;
-    }
+    return distance <= geofenceRadius;
   };
 
   const overtimeFunction = async () => {
@@ -381,6 +408,57 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     }
   };
 
+  const _10mins = async () => {
+    const {location} = await readDetails();
+
+    return new Promise(resolve => {
+      let timer = 1 * 60; // 10 minutes in seconds
+      const interval = setInterval(() => {
+        if (
+          mycoords.current.Latitude === null ||
+          mycoords.current.Longitude === null
+        ) {
+          console.log('Coordinates not available');
+          return;
+        }
+
+        const userLocation = [
+          mycoords.current.Longitude,
+          mycoords.current.Latitude,
+        ];
+        const geofenceCenter = [location.longitude, location.latitude];
+        const geofenceRadius = location.radius;
+        const distance = turf.distance(
+          turf.point(userLocation),
+          turf.point(geofenceCenter),
+          {units: 'meters'},
+        );
+
+        if (distance > geofenceRadius) {
+          if (!isPaused) {
+            setIsPaused(true);
+            setTimer(1 * 60);
+            timer = 1 * 60; // Reset the timer if the user is out of vicinity
+          }
+        } else {
+          if (isPaused) {
+            setIsPaused(false);
+            timer = 1 * 60; // Reset the timer when the user comes back into the vicinity
+            setTimer(1 * 60);
+          }
+          timer -= 1;
+          setTimer(timer);
+          setIsPaused(false);
+          if (timer <= 0) {
+            setIsPaused(false);
+            clearInterval(interval);
+            resolve(true);
+          }
+        }
+      }, 1000); // Check every second
+    });
+  };
+
   const sendTimekeepRequest = async (account, key) => {
     const valid = await isValid();
     const data = await readDetails();
@@ -400,6 +478,16 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         Alert.alert('Error', 'Duplicated Check In.');
         return;
       }
+      setCountdownModal(true);
+      //check if in vicinity for atleast 10mins
+      const inVicinity = await _10mins();
+      if (!inVicinity) {
+        return;
+      }
+
+      console.log('PASS');
+      setCountdownModal(false);
+      return;
       data.records.push({
         accountID: account,
         check_in: unix,
@@ -480,14 +568,16 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
-    const data = await readDetails();
-    console.log(isConnected);
-
-    overtimeFunction();
+    // overtimeFunction();
+    console.log(await isValid());
+    await _10mins();
   };
 
-  const onInfo = () => {
+  const onInfo = async () => {
     closeMenu();
+    console.log(currentCoordinates.Coordinates);
+    console.log(await isValid());
+
     setAppInfoModal(true);
   };
 
@@ -498,6 +588,12 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         visible={showSyncModal}
         onClose={setShowSyncModal}
         SyncData={syncRecords}
+      />
+      <CountdownModal
+        visible={countdownModal}
+        onClose={() => setCountdownModal(false)}
+        initialTime={timer}
+        status={isPaused}
       />
       <SystemInfoModal visible={appInfoModal} onClose={setAppInfoModal} />
       <SafeAreaView style={styles.container}>

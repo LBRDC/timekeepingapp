@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@react-native-vector-icons/material-icons": "^0.0.1-alpha.36",
+    "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
     "@turf/turf": "^7.1.0",

@@ -16,6 +16,7 @@ import {
 import React, {useState, useEffect, act} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import RNFS, {writeFile} from 'react-native-fs';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
 const logo = require('../assets/animatedLogo.gif');
 const {width, height} = Dimensions.get('window');
@@ -36,6 +37,7 @@ import {
   writeInFile,
 } from '../helper/database';
 import {getDeviceUniqueId} from '../helper/DeveloperOptions';
+import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 const datasetFilePath = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 const fileUrl =
   'https://www.dropbox.com/scl/fi/zxswy1jis5r5uq89epu5l/timekeeping_data.json?rlkey=2cg0pkhw4xksat6e5wchyz5cs&st=z5p4owti&dl=1';
@@ -56,11 +58,35 @@ const LoginScreen = ({
   const [loading, setLoading] = useState(false);
   const [loadermsg, setloadermsg] = useState('Downloading...');
   const [showPassword, setShowPassword] = useState(false);
-
+  const [isFirstTime, setIsFirstTime] = useState(false);
   // USEEFFECT
   useEffect(() => {
     init();
   }, []);
+
+  const checkLocal = async value => {
+    try {
+      const value = await AsyncStorage.getItem('isFisrtTime');
+      console.log(value);
+
+      if (value == 'true') {
+        setIsFirstTime(true);
+      }
+    } catch (e) {
+      console.log(e);
+
+      // saving error
+    }
+  };
+
+  const acceptPolicy = () => {
+    try {
+      AsyncStorage.setItem('isFisrtTime', 'false');
+      setIsFirstTime(false);
+    } catch (e) {
+      // saving error
+    }
+  };
 
   const init = async () => {
     const dataset = await checkDatasetExists();
@@ -114,7 +140,6 @@ const LoginScreen = ({
 
     const active = await isOnline();
     const data = await readDetails();
-
 
     if (!active && dsExist && !data.account.employee) {
       Alert.alert(
@@ -234,6 +259,7 @@ const LoginScreen = ({
       if (downloadResult.statusCode === 200) {
         setLoading(false);
         Alert.alert('Success', 'Dataset downloaded successfully!');
+        checkLocal();
       } else {
         setLoading(false);
         console.error(
@@ -255,6 +281,7 @@ const LoginScreen = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <PrivacyPolicyModal visible={isFirstTime} onClose={acceptPolicy} />
       <StatusBar barStyle={'dark-content'} />
       <Loader loading={loading} message={loadermsg} />
       <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.container}>
