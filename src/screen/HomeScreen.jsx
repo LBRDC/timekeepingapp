@@ -18,6 +18,7 @@ import React, {useState, useEffect, useRef} from 'react';
 import * as turf from '@turf/turf';
 import DeviceInfo from 'react-native-device-info';
 import CryptoJS from 'crypto-js';
+import TouchID from 'react-native-touch-id';
 import Geolocation from 'react-native-geolocation-service';
 //ICON
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -153,13 +154,15 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const settings = () => {
     closeMenu();
     // overtimeFunction();
-    setCountdownModal(true);
   };
 
   const syncActivity = async () => {
     const {records, account} = await readDetails();
-    const res = records[records.length - 1];
-
+    const res = records.length > 0 ? records[records.length - 1] : [];
+    if (res.length == 0) {
+      setRecentActivity([]);
+      return;
+    }
     const data = [
       {
         title: 'Check In',
@@ -344,13 +347,104 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         'Notice',
         'You are in offline mode. Any action you make will be saved on your device \n \n Do you want to continue?',
         [
-          {text: 'Yes', onPress: () => biometricsChecker(key)},
+          {
+            text: 'Yes',
+            onPress: () => {
+              if (Platform.OS === 'android') {
+                biometricsChecker(key);
+              } else if (Platform.OS === 'ios') {
+                iosBiometrics(key);
+              }
+            },
+          },
           {text: 'No', onPress: () => null},
         ],
       );
     } else {
-      biometricsChecker(key);
+      if (Platform.OS === 'android') {
+        biometricsChecker(key);
+      } else if (Platform.OS === 'ios') {
+        iosBiometrics(key);
+      }
     }
+  };
+
+  const androidBiometrics = key => {
+    Biometrics.simplePrompt({
+      promptMessage: 'Scan your fingerprint to check in.',
+    }).then(async result => {
+      const {success} = result;
+      if (success) {
+        const {account} = await readDetails();
+        await sendTimekeepRequest(account.accountid, key);
+      } else {
+        console.log('Authentication Failed');
+      }
+    });
+  };
+
+  const iosBiometrics = key => {
+    const config = {
+      unifiedErrors: false,
+      passcodeFallback: false,
+    };
+    TouchID.isSupported(config)
+      .then(async biometryType => {
+        Alert.alert(
+          'Notice',
+          'Would you like to continue with Touch/Face ID authentication? Choosing no you will be prompted with your password.',
+          [
+            {
+              text: 'Yes',
+              onPress: () => {
+                if (biometryType === 'FaceID') {
+                  const config = {
+                    title: 'use face id to record you attendance',
+                  };
+                  TouchID.authenticate('Pakita mo mukha mo', config)
+                    .then(async res => {
+                      if (res) {
+                        const {account} = await readDetails();
+                        await sendTimekeepRequest(account.accountid, key);
+                      } else {
+                        console.log('Authentication Failed');
+                      }
+                    })
+                    .catch(err => {
+                      console.log(err);
+                    });
+                }
+                if (biometryType === 'TouchID') {
+                  const config = {
+                    title: 'use touch id to record you attendance',
+                  };
+                  TouchID.authenticate('Place your finger', config)
+                    .then(async res => {
+                      if (res) {
+                        const {account} = await readDetails();
+                        await sendTimekeepRequest(account.accountid, key);
+                      } else {
+                        console.log('Authentication Failed');
+                      }
+                    })
+                    .catch(err => {
+                      console.log(err);
+                    });
+                }
+              },
+            },
+            {
+              text: 'No',
+              onPress: () => {
+                setShown(true);
+              },
+            },
+          ],
+        );
+      })
+      .catch(err => {
+        setShown(true);
+      });
   };
 
   const biometricsChecker = key => {
@@ -365,17 +459,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               {
                 text: 'Yes',
                 onPress: () => {
-                  Biometrics.simplePrompt({
-                    promptMessage: 'Scan your fingerprint to check in.',
-                  }).then(async result => {
-                    const {success} = result;
-                    if (success) {
-                      const {account} = await readDetails();
-                      await sendTimekeepRequest(account.accountid, key);
-                    } else {
-                      console.log('Authentication Failed');
-                    }
-                  });
+                  androidBiometrics(key);
                 },
               },
               {
@@ -484,10 +568,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       if (!inVicinity) {
         return;
       }
-
-      console.log('PASS');
       setCountdownModal(false);
-      return;
       data.records.push({
         accountID: account,
         check_in: unix,
@@ -505,14 +586,12 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     } else {
       //find check in record base on date today
       const record = data.records.find(record => record.date === curr_date);
-      console.log(record);
-
       if (data.records.length === 0 || record === undefined) {
         Alert.alert('Error', 'No check in record found.');
         return;
       }
       const lastRecord = data.records[data.records.length - 1];
-      if (lastRecord[key] !== null) {
+      if (lastRecord[key] !== '') {
         Alert.alert('Error', `Duplicated ${key.replace('_', ' ')}.`);
         return;
       }
@@ -527,6 +606,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const syncBtn = async () => {
     closeMenu();
+    syncActivity();
     const {records} = await readDetails();
 
     if (records.length <= 0) {
@@ -536,48 +616,71 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     setShowSyncModal(true);
   };
 
+  const sendSyncRequest = async records => {
+    if (!isConnected) {
+      Alert.alert(
+        'Notice',
+        'You are in offline mode. Please connect to the internet to sync your records.',
+      );
+      setShowSyncModal(false);
+      return;
+    }
+
+    executeRequest(
+      URL().syncRecords,
+      'POST',
+      JSON.stringify({records: records}),
+      async res => {
+        console.log(res);
+        setloadermsg('Loading...');
+        setLoading(true);
+        if (!res.loading) {
+          setLoading(false);
+          if (!res.data.Error) {
+            await resetRecords();
+            syncActivity();
+            setShowSyncModal(false);
+          }
+          Alert.alert('Timekeeping', res.data.msg);
+        }
+      },
+    );
+  };
+
   const syncRecords = async () => {
     const validate = await validateLocal();
     const {records} = await readDetails();
     if (validate) {
-      executeRequest(
-        URL().syncRecords,
-        'POST',
-        JSON.stringify({records: records}),
-        async res => {
-          setloadermsg('Loading...');
-          setLoading(true);
-          if (!res.loading) {
-            setLoading(false);
-            if (!res.data.Error) {
-              await resetRecords();
-              syncActivity();
-              setShowSyncModal(false);
-            }
-            Alert.alert('Timekeeping', res.data.msg);
-          }
-        },
-      );
+      sendSyncRequest(records);
     } else {
       Alert.alert(
         'Notice',
-        'Your record is incomplete please contact your HR.',
+        'Your record is incomplete do you want to continue?',
+        [
+          {
+            text: 'No',
+            onPress: () => {
+              setShowSyncModal(false);
+            },
+          },
+          {
+            text: 'Yes',
+            onPress: () => {
+              sendSyncRequest(records);
+            },
+          },
+        ],
       );
     }
   };
 
   const helpMenu = async () => {
     closeMenu();
-    // overtimeFunction();
-    console.log(await isValid());
-    await _10mins();
+    overtimeFunction();
   };
 
   const onInfo = async () => {
     closeMenu();
-    console.log(currentCoordinates.Coordinates);
-    console.log(await isValid());
-
     setAppInfoModal(true);
   };
 
@@ -672,18 +775,18 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               handleAction={e => make_timekeep('check_out')}
             />
             <GButton
-              title="Break In"
-              icon="cafe-outline"
-              color="#006341"
-              textColor="#FFFFFF"
-              handleAction={e => make_timekeep('break_in')}
-            />
-            <GButton
               title="Break Out"
               icon="restaurant-outline"
               color="#006341"
               textColor="#FFFFFF"
               handleAction={e => make_timekeep('break_out')}
+            />
+            <GButton
+              title="Break In"
+              icon="cafe-outline"
+              color="#006341"
+              textColor="#FFFFFF"
+              handleAction={e => make_timekeep('break_in')}
             />
           </View>
 
