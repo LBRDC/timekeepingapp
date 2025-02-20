@@ -72,32 +72,19 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [countdownModal, setCountdownModal] = useState(false);
   const [timer, setTimer] = useState('');
   const [isPaused, setIsPaused] = useState(false);
+  const [bgWatchID, setBgWatchID] = useState();
+  const [entryTimestamp, setEntryTimestamp] = useState(null);
+  const [timerInterval, setTimerInterval] = useState(null);
+  const [curr_distance, setCurrDistance] = useState(null);
   const mycoords = useRef({
     Latitude: null,
     Longitude: null,
   });
-  const alerted = useRef(false);
-  const isback = useRef(false);
-  useEffect(() => {
-    const watchId = Geolocation.watchPosition(
-      position => {
-        console.log(
-          'Position updated:',
-          position.coords.latitude,
-          position.coords.longitude,
-        );
-        BackgroundGeoService.handleLocationUpdate(position);
-        mycoords.current = {
-          Latitude: position.coords.latitude,
-          Longitude: position.coords.longitude,
-        };
-      },
-      error => console.log(error),
-      {enableHighAccuracy: true, distanceFilter: 1},
-    );
 
-    return () => Geolocation.clearWatch(watchId);
-  }, []);
+  // useEffect(() => {
+
+  //   return () => Geolocation.clearWatch(watchId);
+  // }, []);
 
   useEffect(() => {
     setLoading(false);
@@ -545,6 +532,58 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     });
   };
 
+  const startBackgroundTracking = () => {
+    const watchId = Geolocation.watchPosition(
+      position => {
+        console.log(
+          'Position updated:',
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+        handleLocationUpdate(position);
+      },
+      error => console.log(error),
+      {enableHighAccuracy: true, distanceFilter: 1},
+    );
+
+    setBgWatchID(watchId);
+  };
+
+  const handleLocationUpdate = position => {
+    const {latitude, longitude} = position.coords;
+    const distance = BackgroundGeoService.calculateDistance(
+      latitude,
+      longitude,
+      VALID_LAT,
+      VALID_LNG,
+    );
+  };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3;
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) ** 2 +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+  const awaitingCheckIn = () => {
+    return new Promise(async resolve => {
+      const {location} = await readDetails();
+      const VALID_LAT = location.latitude;
+      const VALID_LNG = location.longitude;
+      const RADIUS_METERS = location.radius;
+      const REQUIRED_DURATION = 20;
+      startBackgroundTracking();
+    });
+  };
+
   const sendTimekeepRequest = async (account, key) => {
     const valid = await isValid();
     const data = await readDetails();
@@ -565,6 +604,10 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         return;
       }
       setCountdownModal(true);
+      const isGood = await awaitingCheckIn();
+      if (!isGood) {
+        return;
+      }
       //check if in vicinity for atleast 10mins
       // const inVicinity = await _10mins();
       // if (!inVicinity) {

@@ -5,7 +5,7 @@ const USER_DATA = `${RNFS.DocumentDirectoryPath}/timekeeping_data.json`;
 
 export const saveDetails = async (data, rememberMe) => {
   const details = await readDetails();
-  // console.log(USER_DATA);
+  console.log(USER_DATA);
 
   try {
     if (Object.values(details.account)[1].length == 0) {

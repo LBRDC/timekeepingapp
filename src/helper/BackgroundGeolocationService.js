@@ -4,14 +4,30 @@ import moment from 'moment';
 
 import NotificationManager from './NotificationManager';
 
+let curr_distance = null;
 let entryTimestamp = null;
 let timerInterval = null;
-
 const VALID_LAT = 14.572732777884;
 const VALID_LNG = 120.98312437534;
 const RADIUS_METERS = 46.532275387312;
-const REQUIRED_DURATION = 10; // 5 minutes
+const REQUIRED_DURATION = 20; // 5 minutes
 const BackgroundGeoService = {
+  startBackgroundTracking: () => {
+    const watchId = Geolocation.watchPosition(
+      position => {
+        console.log(
+          'Position updated:',
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+        handleLocationUpdate(position);
+      },
+      error => console.log(error),
+      {enableHighAccuracy: true, distanceFilter: 1},
+    );
+
+    setBgWatchID(watchId);
+  },
   handleLocationUpdate: position => {
     const {latitude, longitude} = position.coords;
     const distance = BackgroundGeoService.calculateDistance(
@@ -20,16 +36,24 @@ const BackgroundGeoService = {
       VALID_LAT,
       VALID_LNG,
     );
-    console.log(`📍 Distance: ${distance.toFixed(2)}m`);
-
+    // console.log(`📍 Distance: ${distance.toFixed(2)}m`);
+    curr_distance = distance;
     if (distance <= RADIUS_METERS) {
       if (!entryTimestamp) {
-        console.log('✅ Entered valid area, starting timer. ' + Platform.OS);
+        NotificationManager.sendLocalNotification(
+          '✅ Entered valid area',
+          curr_distance.toFixed(2) + 'm',
+        );
+        // console.log('✅ Entered valid area, starting timer. ' + Platform.OS);
         entryTimestamp = moment();
         BackgroundGeoService.startTimer();
       }
     } else {
-      console.log('🚫 Outside valid area, timer reset. ' + Platform.OS);
+      NotificationManager.sendLocalNotification(
+        '🚫 Outside valid area, timer reset.',
+        curr_distance.toFixed(2) + 'm',
+      );
+      // console.log('🚫 Outside valid area, timer reset. ' + Platform.OS);
       BackgroundGeoService.stopTimer();
     }
   },
@@ -38,12 +62,17 @@ const BackgroundGeoService = {
     timerInterval = setInterval(() => {
       const elapsed = moment().diff(entryTimestamp, 'seconds');
       const remaining = REQUIRED_DURATION - elapsed;
-      console.log(`⏳ Remaining: ${remaining}s`);
+      // console.log(`⏳ Remaining: ${remaining}s`);
       if (remaining <= 0) {
         BackgroundGeoService.confirmAttendance();
         BackgroundGeoService.stopTimer();
-      }else{
-
+      } else {
+        if (remaining > 0) {
+          NotificationManager.sendLocalNotification(
+            `⏳: ${BackgroundGeoService.formatTime(remaining)}`,
+            curr_distance.toFixed(2) + 'm',
+          );
+        }
       }
     }, 1000);
   },
@@ -54,11 +83,14 @@ const BackgroundGeoService = {
     entryTimestamp = null;
   },
 
+  formatTime: seconds => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  },
+
   confirmAttendance: () => {
-    NotificationManager.sendLocalNotification();
-    console.log(
-      '🎯 Attendance Confirmed: User stayed for 5 minutes! ' + Platform.OS,
-    );
+    NotificationManager.sendLocalNotification('🎯 Check in Confirmed!', '');
     BackgroundGeoService.stopTimer();
   },
 
