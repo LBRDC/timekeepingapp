@@ -1,11 +1,16 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import {Modal, View, Text, StyleSheet} from 'react-native';
 
 const CountdownModal = ({visible, onClose, initialTime, status}) => {
   const formatTime = seconds => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    if (seconds >= 60) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes}:${
+        remainingSeconds < 10 ? '0' : ''
+      }${remainingSeconds} minutes left`;
+    }
+    return `${seconds} seconds left`;
   };
 
   return (
@@ -16,9 +21,7 @@ const CountdownModal = ({visible, onClose, initialTime, status}) => {
       onRequestClose={onClose}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.timerText}>
-            {formatTime(initialTime)} minutes left
-          </Text>
+          <Text style={styles.timerText}>{formatTime(initialTime)}</Text>
           <Text style={styles.instructionText}>
             Please stay within the vicinity for the specified time to mark your
             check-in.

@@ -174,7 +174,6 @@ const LoginScreen = ({
       async res => {
         setloadermsg('Loading...');
         setLoading(true);
-        console.log(res);
 
         if (!res.loading) {
           setLoading(false);

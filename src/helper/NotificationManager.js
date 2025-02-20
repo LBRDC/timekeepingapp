@@ -5,12 +5,12 @@ import {PermissionsAndroid, Platform} from 'react-native';
 const NotificationManager = {
   requestNotificationPermission: async () => {
     if (Platform.OS === 'ios') {
-      const request = await PushNotificationIOS.requestPermissions();
+      await PushNotificationIOS.requestPermissions();
     }
 
     if (Platform.OS === 'android') {
       try {
-        const check = PermissionsAndroid.check(
+        const check = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
         );
         if (!check) {
@@ -30,7 +30,7 @@ const NotificationManager = {
       try {
         PushNotification.createChannel(
           {
-            channelId: 'local-notification-channel', // Unique ID
+            channelId: 'local-notification-channel',
             channelName: 'Local Notifications',
             channelDescription: 'A channel for local notifications',
             playSound: true,
@@ -38,7 +38,7 @@ const NotificationManager = {
             importance: 4,
             vibrate: true,
           },
-          created => console.log(`Channel created: ${created}`), // Debug log
+          created => console.log(`Channel created: ${created}`),
         );
       } catch (error) {
         console.log(error);
@@ -46,28 +46,31 @@ const NotificationManager = {
     }
   },
 
-  sendLocalNotification: (message, distance) => {
+  sendLocalNotification: (remainingTime, distance) => {
     try {
+      const timeMessage =
+        remainingTime >= 60
+          ? `${Math.floor(remainingTime / 60)} min ${remainingTime % 60} sec`
+          : `${remainingTime} sec`;
+
+      const message = `Time left: ${timeMessage} | Distance: ${distance.toFixed(
+        2,
+      )}m`;
+
       if (Platform.OS === 'android') {
         PushNotification.localNotification({
           channelId: 'local-notification-channel',
+          title: 'Timekeeping Alert',
           id: 0,
-          title: 'My Notification Title',
-          message: 'My Notification Message',
-          picture: 'https://www.example.tld/picture.jpg',
-          userInfo: {},
-          playSound: false,
+          message: message,
+          playSound: true,
           soundName: 'default',
-          number: 10,
-          repeatType: 'day',
-          ongoing: true,
         });
       } else if (Platform.OS === 'ios') {
         PushNotificationIOS.addNotificationRequest({
           id: '0',
-          title: 'Timekeeping',
-          body: `${message}${distance && '      📍' + distance}`,
-          userInfo: {},
+          title: 'Timekeeping Alert',
+          body: message,
           sound: 'default',
         });
       }
