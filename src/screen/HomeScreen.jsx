@@ -41,7 +41,8 @@ import {
   resetRecords,
   writeInFile,
 } from '../helper/database';
-
+import NotificationManager from '../helper/NotificationManager';
+import BackgroundGeoService from '../helper/BackgroundGeolocationService';
 //Location
 import {getCurrentLocation} from '../services/getLocation';
 
@@ -85,6 +86,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
           position.coords.latitude,
           position.coords.longitude,
         );
+        BackgroundGeoService.handleLocationUpdate(position);
         mycoords.current = {
           Latitude: position.coords.latitude,
           Longitude: position.coords.longitude,
@@ -496,7 +498,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     const {location} = await readDetails();
 
     return new Promise(resolve => {
-      let timer = 1 * 60; // 10 minutes in seconds
+      let timer = 10 * 60; // 10 minutes in seconds
       const interval = setInterval(() => {
         if (
           mycoords.current.Latitude === null ||
@@ -521,14 +523,14 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         if (distance > geofenceRadius) {
           if (!isPaused) {
             setIsPaused(true);
-            setTimer(1 * 60);
+            setTimer(10 * 60);
             timer = 1 * 60; // Reset the timer if the user is out of vicinity
           }
         } else {
           if (isPaused) {
             setIsPaused(false);
             timer = 1 * 60; // Reset the timer when the user comes back into the vicinity
-            setTimer(1 * 60);
+            setTimer(10 * 60);
           }
           timer -= 1;
           setTimer(timer);
@@ -564,10 +566,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
       }
       setCountdownModal(true);
       //check if in vicinity for atleast 10mins
-      const inVicinity = await _10mins();
-      if (!inVicinity) {
-        return;
-      }
+      // const inVicinity = await _10mins();
+      // if (!inVicinity) {
+      //   return;
+      // }
+
       setCountdownModal(false);
       data.records.push({
         accountID: account,
@@ -676,7 +679,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
-    overtimeFunction();
+    NotificationManager.sendLocalNotification();
+    // overtimeFunction();
   };
 
   const onInfo = async () => {

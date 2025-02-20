@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
   },
   title: {
+    color: 'black',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 15,
@@ -117,12 +118,14 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   sectionTitle: {
+    color: 'black',
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 5,
   },
   modalText: {
+    color: 'black',
     fontSize: 16,
     textAlign: 'left',
     marginBottom: 10,

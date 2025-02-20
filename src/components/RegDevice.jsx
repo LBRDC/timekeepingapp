@@ -7,63 +7,68 @@ import {
   Image,
   Linking,
   Platform,
-  PermissionsAndroid
+  PermissionsAndroid,
 } from 'react-native';
 //helper
 import {getDeviceUniqueId} from '../helper/DeveloperOptions';
 
 //services
-import { URL, executeRequest } from '../services/urls';
+import {URL, executeRequest} from '../services/urls';
 
 //components
 import Loader from './Loader';
 
-const RegDevice = ({navigation,accountID}) => {
+const RegDevice = ({navigation, accountID}) => {
   const [loading, setLoading] = useState(false);
   const [loadermsg, setloadermsg] = useState('Downloading...');
 
-async function requestPermission() {
-  try {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
-      {
-        title: "Phone State Permission",
-        message: "This app needs access to your phone's state",
-        buttonNegative: "Cancel",
-        buttonPositive: "OK",
+  async function requestPermission() {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_PHONE_STATE,
+        {
+          title: 'Phone State Permission',
+          message: "This app needs access to your phone's state",
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Permission granted');
+      } else {
+        console.log('Permission denied');
       }
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log("Permission granted");
-
-    } else {
-      console.log("Permission denied");
+    } catch (err) {
+      console.warn(err);
     }
-  } catch (err) {
-    console.warn(err);
   }
-}
 
   const registerDevice = async () => {
-    const deviceId = await getDeviceUniqueId()
-    executeRequest(URL().registerDevice, "POST", JSON.stringify({accountID: accountID, serialNumber: deviceId}), (res)=>{
-      setloadermsg("Please wait...")
-      setLoading(true)
-      if(!res.loading){
-        setLoading(false)
-        setTimeout(() => {
-        navigation.navigate('Login')
-        }, 1611);
-      }
-    })
+    const deviceId = await getDeviceUniqueId();
+    executeRequest(
+      URL().registerDevice,
+      'POST',
+      JSON.stringify({accountID: accountID, serialNumber: deviceId}),
+      res => {
+        setloadermsg('Please wait...');
+        setLoading(true);
+        if (!res.loading) {
+          setLoading(false);
+          setTimeout(() => {
+            navigation.navigate('Login');
+          }, 1611);
+        }
+      },
+    );
   };
   return (
     <View style={styles.container}>
-       <Loader loading={loading} message={loadermsg} />
+      <Loader loading={loading} message={loadermsg} />
       <Image source={require('../assets/mobile.png')} style={styles.image} />
       <Text style={styles.title}>Register Your Device</Text>
       <Text style={styles.message}>
-         To provide you with the best banking experience, please register your device.
+        To provide you with the best banking experience, please register your
+        device.
       </Text>
       <TouchableOpacity style={styles.button} onPress={registerDevice}>
         <Text style={styles.buttonText}>Register</Text>

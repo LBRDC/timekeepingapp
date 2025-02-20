@@ -4,12 +4,12 @@ import 'react-native-get-random-values';
 import * as Keychain from 'react-native-keychain';
 import EncryptedStorage from 'react-native-encrypted-storage';
 import {v4 as uuidv4} from 'uuid';
+import DeviceInfo from 'react-native-device-info';
 const {DeveloperOptions} = NativeModules;
 
 export const openDeveloperOptions = () => {
   DeveloperOptions.openDeveloperOptions();
 };
-
 
 export const openLocationSettings = () => {
   if (Platform.OS == 'android') {
@@ -58,18 +58,26 @@ export const androidSN = () => {
 export async function getDeviceUniqueId() {
   if (Platform.OS === 'android') {
     try {
-      const storedId = await EncryptedStorage.getItem('deviceUniqueId');
-      if (storedId) {
-        return storedId;
-      }
-      const newId = uuidv4();
-      await EncryptedStorage.setItem('deviceUniqueId', newId);
-      return newId;
+      const id = await DeviceInfo.getUniqueId();
+      return id;
     } catch (error) {
-      console.error('Error accessing Encrypted Storage:', error);
       return null;
     }
   }
+  // if (Platform.OS === 'android') {
+  //   try {
+  //     const storedId = await EncryptedStorage.getItem('deviceUniqueId');
+  //     if (storedId) {
+  //       return storedId;
+  //     }
+  //     const newId = uuidv4();
+  //     await EncryptedStorage.setItem('deviceUniqueId', newId);
+  //     return newId;
+  //   } catch (error) {
+  //     console.error('Error accessing Encrypted Storage:', error);
+  //     return null;
+  //   }
+  // }
 
   if (Platform.OS === 'ios') {
     const DEVICE_ID_KEY = 'deviceUniqueId';

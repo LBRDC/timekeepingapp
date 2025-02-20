@@ -1,17 +1,32 @@
 /* eslint-disable prettier/prettier */
+const domain = 'https://lbrdc-software.com/timekeeping/query/mobile/';
 export function URL() {
   return {
-    login: 'http://192.168.0.49:3002/query/mobile/login.php',
-    syncAccount: 'http://192.168.0.49:3002/query/mobile/syncAccount.php',
-    otp: 'http://192.168.0.49:3002/query/mobile/mail/mail.php',
-    updateEmail: 'http://192.168.0.49:3002/query/mobile/updateEmail.php',
-    updatePassword: 'http://192.168.0.49:3002/query/mobile/updatePassword.php',
-    registerDevice: 'http://192.168.0.49:3002/query/mobile/addSerial.php',
-    timekeep: 'http://192.168.0.49:3002/query/mobile/timekeep.php',
-    recentAction: 'http://192.168.0.49:3002/query/mobile/recentActivity.php',
-    syncRecords: 'http://192.168.0.49:3002/query/mobile/syncRecords.php',
+    login: `${domain}login.php`,
+    syncAccount: `${domain}syncAccount.php`,
+    otp: `${domain}mail/mail.php`,
+    updateEmail: `${domain}updateEmail.php`,
+    updatePassword: `${domain}updatePassword.php`,
+    registerDevice: `${domain}addSerial.php`,
+    timekeep: `${domain}timekeep.php`,
+    recentAction: `${domain}recentActivity.php`,
+    syncRecords: `${domain}syncRecords.php`,
   };
 }
+
+// export function URL() {
+//   return {
+//     login: 'http://192.168.0.49:3002/query/mobile/login.php',
+//     syncAccount: 'http://192.168.0.49:3002/query/mobile/syncAccount.php',
+//     otp: 'http://192.168.0.49:3002/query/mobile/mail/mail.php',
+//     updateEmail: 'http://192.168.0.49:3002/query/mobile/updateEmail.php',
+//     updatePassword: 'http://192.168.0.49:3002/query/mobile/updatePassword.php',
+//     registerDevice: 'http://192.168.0.49:3002/query/mobile/addSerial.php',
+//     timekeep: 'http://192.168.0.49:3002/query/mobile/timekeep.php',
+//     recentAction: 'http://192.168.0.49:3002/query/mobile/recentActivity.php',
+//     syncRecords: 'http://192.168.0.49:3002/query/mobile/syncRecords.php',
+//   };
+// }
 
 // export function URL() {
 //   return {
@@ -93,7 +108,11 @@ export async function executeRequest(
     const request = await fetch(url, {
       method,
       body: requestBody,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Basic WmhlbjpMYnJkYzIwMjEu',
+      },
+
       signal: controller.signal,
     });
     // Clear the timeout if the request completes
@@ -120,7 +139,7 @@ export async function executeRequest(
     if (error.name === 'AbortError') {
       return result({error: true, loading: false, data: 'Request timed out'});
     } else if (error instanceof TypeError) {
-      return result({error: true, loading: false, data: 'Network Error'});
+      return result({error: true, loading: false, data: error});
     } else {
       return result({
         error: true,

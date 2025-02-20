@@ -17,6 +17,7 @@ import React, {useState, useEffect, act} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import RNFS, {writeFile} from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DeviceInfo from 'react-native-device-info';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
 const logo = require('../assets/animatedLogo.gif');
 const {width, height} = Dimensions.get('window');
@@ -61,6 +62,15 @@ const LoginScreen = ({
   const [isFirstTime, setIsFirstTime] = useState(false);
   // USEEFFECT
   useEffect(() => {
+    // async function test() {
+    //   console.log('hgello');
+    //   const id = await DeviceInfo.getUniqueId();
+    //   const name = await DeviceInfo.getDeviceName();
+    //   console.log(`${id} ${name}`);
+    // }
+    // if (Platform.OS === 'android') {
+    //   test();
+    // }
     init();
   }, []);
 
@@ -164,6 +174,8 @@ const LoginScreen = ({
       async res => {
         setloadermsg('Loading...');
         setLoading(true);
+        console.log(res);
+
         if (!res.loading) {
           setLoading(false);
           if (!res.error && !res.data.Error) {

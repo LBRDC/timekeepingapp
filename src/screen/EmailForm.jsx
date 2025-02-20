@@ -40,6 +40,8 @@ export default function EmailAddForm({navigation, accountID, password}) {
       setCode(code);
       const data = {email: email, subject: 'OTP Verification', otp: code};
       executeRequest(URL().otp, 'POST', JSON.stringify(data), res => {
+        console.log(res);
+
         setloadermsg('Sending OTP...');
         setLoading(true);
         if (!res.loading) {
@@ -69,19 +71,19 @@ export default function EmailAddForm({navigation, accountID, password}) {
             if (!res.loading) {
               setLoading(false);
               console.log(res);
-              
-              if(!res.error){
+
+              if (!res.error) {
                 if (!res.data.Error) {
-                if (password == 'LBRDC') {
-                  navigation.navigate('ChangePassword');
+                  if (password == 'LBRDC') {
+                    navigation.navigate('ChangePassword');
+                  } else {
+                    navigation.navigate('Login');
+                  }
                 } else {
-                  navigation.navigate('Login');
+                  Alert.alert('Error', res.data.msg);
                 }
               } else {
-                Alert.alert('Error', res.data.msg);
-              }
-              }else{
-                Alert.alert("Error", res.data);
+                Alert.alert('Error', res.data);
               }
             }
           },

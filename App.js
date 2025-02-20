@@ -15,6 +15,9 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 // GEOLOCATION
 import Geolocation from 'react-native-geolocation-service';
 import {Platform, Alert, PermissionsAndroid, Linking} from 'react-native';
+
+//HELPER
+import NotificationManager from './src/helper/NotificationManager';
 import {
   checkAutoDateTime,
   checkAutoTimeZone,
@@ -27,13 +30,21 @@ const App = () => {
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
   const intervalIdRef = useRef(null);
+
+  useEffect(() => {
+    NotificationManager.requestNotificationPermission();
+    if (Platform.OS === 'android') {
+      NotificationManager.createNotificationChannel();
+    }
+  }, []);
+
   useEffect(() => {
     checkLocal();
     isLoggedIn();
     intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
-      //devOptions();
+      // devOptions();
       dateTime();
     }, 1000);
 
@@ -56,7 +67,7 @@ const App = () => {
 
   const isGpsEnable = async () => {
     if (Platform.OS === 'ios') {
-      const authStatus = await Geolocation.requestAuthorization('whenInUse');
+      const authStatus = await Geolocation.requestAuthorization('always');
       setLocStatus(authStatus === 'granted');
     } else if (Platform.OS === 'android') {
       const isLocationEnabled = await DeviceInfo.isLocationEnabled();
