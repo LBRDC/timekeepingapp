@@ -769,10 +769,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
-    console.log(await startBackgroundTracking());
-    // overtimeFunction();
-
-    console.log('Do the attendance');
+    // console.log(await startBackgroundTracking());
+    overtimeFunction();
   };
 
   const onInfo = async () => {
