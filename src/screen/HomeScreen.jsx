@@ -19,6 +19,7 @@ import * as turf from '@turf/turf';
 import moment from 'moment';
 import TouchID from 'react-native-touch-id';
 import Geolocation from 'react-native-geolocation-service';
+import DeviceInfo from 'react-native-device-info';
 
 //ICON
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -78,8 +79,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   let entryTimestamp = null;
   let bgWatchID = null;
   // useEffect(() => {
-
-  //   return () => Geolocation.clearWatch(watchId);
+  //   const start = async () => {
+  //     await startBackgroundTracking();
+  //   };
+  //   start();
+  //   // return () => Geolocation.clearWatch(watchId);
   // }, []);
 
   useEffect(() => {
@@ -529,23 +533,21 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   };
 
   const startBackgroundTracking = () => {
+    setloadermsg('Please wait to activate...');
+    setLoading(true);
     return new Promise((resolve, reject) => {
       const watchId = Geolocation.watchPosition(
         position => {
-          console.log(
-            'Position updated:',
-            position.coords.latitude,
-            position.coords.longitude,
-          );
           handleLocationUpdate(position)
             .then(resolve) // 🔥 Resolve the promise properly
             .catch(reject);
         },
         error => {
           console.log(error);
-          reject(error); // Reject if there's an error
+          setCountdownModal(false);
+          // reject(error); // Reject if there's an error
         },
-        {enableHighAccuracy: true, distanceFilter: 5},
+        {enableHighAccuracy: true, distanceFilter: 1},
       );
       bgWatchID = watchId;
     });
@@ -553,10 +555,12 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const handleLocationUpdate = async position => {
     return new Promise(async (resolve, reject) => {
+      setLoading(false);
+      setCountdownModal(true);
       const {location} = await readDetails();
-      const VALID_LAT = 14.7418066;
-      const VALID_LNG = 120.9967092;
-      const RADIUS_METERS = 100.532275387312;
+      const VALID_LAT = location.latitude;
+      const VALID_LNG = location.longitude;
+      const RADIUS_METERS = location.radius;
 
       const {latitude, longitude} = position.coords;
       const distance = calculateDistance(
@@ -579,12 +583,13 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
             const elapsed = moment().diff(entryTimestamp, 'seconds');
             const remaining = REQUIRED_DURATION - elapsed;
             setTimer(remaining);
-            console.log('⏰ Elapsed:', elapsed);
             console.log('⏰ Remaining:', remaining);
 
             if (remaining <= 0) {
               stopTracking(bgWatchID);
               resolve(true); // ✅ Now it correctly resolves the promise
+              NotificationManager.sendCompleteLocalNotif();
+              setCountdownModal(false);
             } else {
               NotificationManager.sendLocalNotification(remaining, distance);
             }
@@ -594,7 +599,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
         console.log('🚫 Outside valid area, timer reset. ' + Platform.OS);
         setIsPaused(true);
         stopTimer();
-        reject(false); // ✅ Reject when moving outside the area
+        // reject(false); // ✅ Reject when moving outside the area
       }
     });
   };
@@ -764,10 +769,9 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
-    setCountdownModal(true);
     console.log(await startBackgroundTracking());
-    setCountdownModal(false);
     // overtimeFunction();
+
     console.log('Do the attendance');
   };
 

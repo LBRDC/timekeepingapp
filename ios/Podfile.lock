@@ -397,6 +397,8 @@ PODS:
   - RNScreens (3.19.0):
     - React-Core
     - React-RCTImage
+  - RNSVG (15.0.0):
+    - React-Core
   - RNVectorIcons (10.2.0):
     - React-Core
   - SocketRocket (0.6.1)
@@ -479,6 +481,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - TouchID (from `../node_modules/react-native-touch-id`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -596,6 +599,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keychain"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   TouchID:
@@ -664,6 +669,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 31e16f74c287d4e0cba7c24c2a6371e7b9f3454c
   RNKeychain: 3dcf89e874edfe6550c50a91f1b084be1be22867
   RNScreens: 4ff3bbcbc50751821952382c820df2e4394b2879
+  RNSVG: a9e095acf2e207f2ef491870523ed455636cf3b8
   RNVectorIcons: e944f84b90781998c847ee42ad411a1bf8825ac8
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   TouchID: 6d9af299007675845fe9e23bd2701f4354613366

@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 const domain = 'https://lbrdc-software.com/timekeeping/query/mobile/';
+const updaterDomain = 'http://mobile.lbrdc-software.com/';
 export function URL() {
   return {
     login: `${domain}login.php`,
@@ -11,6 +12,7 @@ export function URL() {
     timekeep: `${domain}timekeep.php`,
     recentAction: `${domain}recentActivity.php`,
     syncRecords: `${domain}syncRecords.php`,
+    updateApp: `${updaterDomain}`,
   };
 }
 

@@ -5,7 +5,11 @@ import {PermissionsAndroid, Platform} from 'react-native';
 const NotificationManager = {
   requestNotificationPermission: async () => {
     if (Platform.OS === 'ios') {
-      await PushNotificationIOS.requestPermissions();
+      await PushNotificationIOS.requestPermissions({
+        alert: true,
+        badge: false,
+        sound: false,
+      });
     }
 
     if (Platform.OS === 'android') {
@@ -35,7 +39,7 @@ const NotificationManager = {
             channelDescription: 'A channel for local notifications',
             playSound: true,
             soundName: 'default',
-            importance: 4,
+            importance: PushNotification.Importance.Low,
             vibrate: true,
           },
           created => console.log(`Channel created: ${created}`),
@@ -60,7 +64,7 @@ const NotificationManager = {
       if (Platform.OS === 'android') {
         PushNotification.localNotification({
           channelId: 'local-notification-channel',
-          title: 'Timekeeping Alert',
+          title: 'Timekeeping',
           id: 0,
           message: message,
           playSound: true,
@@ -69,8 +73,32 @@ const NotificationManager = {
       } else if (Platform.OS === 'ios') {
         PushNotificationIOS.addNotificationRequest({
           id: '0',
-          title: 'Timekeeping Alert',
+          title: 'Timekeeping',
           body: message,
+          sound: 'default',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  },
+
+  sendCompleteLocalNotif: () => {
+    try {
+      if (Platform.OS === 'android') {
+        PushNotification.localNotification({
+          channelId: 'local-notification-channel',
+          title: 'Timekeeping',
+          id: 0,
+          message: 'Attendance Confirmed',
+          playSound: true,
+          soundName: 'default',
+        });
+      } else if (Platform.OS === 'ios') {
+        PushNotificationIOS.addNotificationRequest({
+          id: '0',
+          title: 'Timekeeping',
+          body: 'Attendance Confirmed',
           sound: 'default',
         });
       }

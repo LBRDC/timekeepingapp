@@ -3,11 +3,12 @@ import React, {useEffect, useState, useRef} from 'react';
 import DeviceInfo from 'react-native-device-info';
 import JailMonkey from 'jail-monkey';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNFS, {exists} from 'react-native-fs';
 // COMPONENTS
 import LocationError from './src/components/LocationError';
 import DeveloperEnabled from './src/components/DeveloperEnabled';
 import DateTimeError from './src/components/DateTimeError';
-
+import DownloadingPage from './src/components/DownloadingPage';
 // NAVIGATORS
 import MainNavigator from './src/navigation/MainNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
@@ -24,18 +25,36 @@ import {
 } from './src/helper/DeveloperOptions';
 import {checkDatasetExists, readDetails} from './src/helper/database';
 
+//SERVICES
+import {URL, executeRequest} from './src/services/urls';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [locStatus, setLocStatus] = useState(true);
   const [isDebugMode, setIsDebugMode] = useState(false);
   const [isAutoDateTime, setIsAutoDateTime] = useState(true);
+  const [isUpdating, setUpdating] = useState(false);
   const intervalIdRef = useRef(null);
-
+  const downloadPath = RNFS.DocumentDirectoryPath + '/timekeeping.apk';
   useEffect(() => {
     NotificationManager.requestNotificationPermission();
-    if (Platform.OS === 'android') {
-      NotificationManager.createNotificationChannel();
-    }
+    const testOut = async () => {
+      const appversion = await DeviceInfo.getVersion();
+      if (Platform.OS === 'android') {
+        NotificationManager.createNotificationChannel();
+        executeRequest(URL().updateApp, 'GET', null, async res => {
+          if (!res.loading) {
+            if (appversion != res.data.appVersion) {
+              setUpdating(res.data.download);
+            } else {
+              if (await RNFS.exists(downloadPath)) {
+                await RNFS.unlink(downloadPath);
+              }
+            }
+          }
+        });
+      }
+    };
+    testOut();
   }, []);
 
   useEffect(() => {
@@ -44,7 +63,7 @@ const App = () => {
     intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
-      // devOptions();
+      devOptions();
       dateTime();
     }, 1000);
 
@@ -143,7 +162,9 @@ const App = () => {
 
   const NavContainer = () => (
     <NavigationContainer>
-      {isAuthenticated ? (
+      {isUpdating ? (
+        <DownloadingPage />
+      ) : isAuthenticated ? (
         <MainNavigator setIsAuthenticated={setIsAuthenticated} />
       ) : (
         <AuthNavigator setIsAuthenticated={setIsAuthenticated} />

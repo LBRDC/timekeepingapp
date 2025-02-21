@@ -3,14 +3,18 @@ import {Modal, View, Text, StyleSheet} from 'react-native';
 
 const CountdownModal = ({visible, onClose, initialTime, status}) => {
   const formatTime = seconds => {
-    if (seconds >= 60) {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      return `${minutes}:${
-        remainingSeconds < 10 ? '0' : ''
-      }${remainingSeconds} minutes left`;
+    if (!status) {
+      if (seconds >= 60) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${
+          remainingSeconds < 10 ? '0' : ''
+        }${remainingSeconds} minutes left`;
+      }
+      return `${seconds} seconds left`;
+    } else {
+      return 'Timer is paused';
     }
-    return `${seconds} seconds left`;
   };
 
   return (
