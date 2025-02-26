@@ -15,9 +15,9 @@ const MainNavigator = ({setIsAuthenticated}) => {
   useEffect(() => {
     const id = watchCurrentLocation();
 
-    return () => {
-      Geolocation.clearWatch(id); // Clear the watch on unmount
-    };
+    // return () => {
+    //   Geolocation.clearWatch(id); // Clear the watch on unmount
+    // };
   }, []);
 
   const watchCurrentLocation = () => {
@@ -39,7 +39,7 @@ const MainNavigator = ({setIsAuthenticated}) => {
         enableHighAccuracy: true,
         distanceFilter: 3,
         interval: 2000,
-        fastestInterval: 1000,
+        fastestInterval: 1500,
         maximumAge: 1000,
       },
     );

@@ -39,7 +39,7 @@ const App = () => {
   useEffect(() => {
     const checkAutoTime = async () => {
       const isEnabled = await CheckDeviceAutoTime.isAutomaticTimeEnabled();
-      Alert.alert('Auto Time', isEnabled ? 'Enabled' : 'Disabled');
+      // Alert.alert('Auto Time', isEnabled ? 'Enabled' : 'Disabled');
     };
 
     checkAutoTime();
@@ -48,20 +48,23 @@ const App = () => {
   useEffect(() => {
     NotificationManager.requestNotificationPermission();
     const testOut = async () => {
-      const appversion = await DeviceInfo.getVersion();
+      const appversion = DeviceInfo.getVersion();
       if (Platform.OS === 'android') {
         NotificationManager.createNotificationChannel();
-        executeRequest(URL().updateApp, 'GET', null, async res => {
-          if (!res.loading) {
-            if (appversion != res.data.appVersion) {
-              setUpdating(res.data.download);
-            } else {
-              if (await RNFS.exists(downloadPath)) {
-                await RNFS.unlink(downloadPath);
+        const req = await fetch('https://www.google.com');
+        if (req.ok) {
+          executeRequest(URL().updateApp, 'GET', null, async res => {
+            if (!res.loading) {
+              if (appversion != res.data.appVersion) {
+                setUpdating(res.data.download);
+              } else {
+                if (await RNFS.exists(downloadPath)) {
+                  await RNFS.unlink(downloadPath);
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
     };
     testOut();

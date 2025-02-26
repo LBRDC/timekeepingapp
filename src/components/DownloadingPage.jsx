@@ -4,7 +4,7 @@ import RNFS, {exists} from 'react-native-fs';
 import RNApkInstaller from '@dominicvonk/react-native-apk-installer';
 import Loader from './Loader';
 import * as Progress from 'react-native-progress';
-const DownloadingPage = () => {
+const DownloadingPage = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [loadermsg, setloadermsg] = useState('Downloading...');
   const [progress, setProgress] = useState();
@@ -26,22 +26,36 @@ const DownloadingPage = () => {
     const isExist = await RNFS.exists(downloadPath);
 
     if (isExist) {
-      await RNApkInstaller.install(downloadPath);
-      return;
-    }
+      console.log('File Exist');
 
+      const stat = await RNFS.stat(downloadPath);
+      console.log(stat.size);
+
+      if (stat.size < 28458411) {
+        await RNFS.unlink(downloadPath);
+      } else {
+        await RNApkInstaller.install(downloadPath);
+        await RNFS.unlink(downloadPath);
+        return;
+      }
+    }
+    console.log('Running');
+
+    setloadermsg('Fetching the latest version of the app...');
+    setLoading(true);
     const download = RNFS.downloadFile({
       fromUrl: downloadURL,
       toFile: downloadPath,
       progress: res => {
+        if (res.bytesWritten > 100) {
+          setLoading(false);
+        }
         const prog = (res.bytesWritten / res.contentLength).toFixed(2);
         setProgress(parseFloat(prog));
       },
       progressDivider: 1,
     });
     download.promise.then(async res => {
-      console.log(res);
-
       if (res.statusCode === 200) {
         const installNow = await RNApkInstaller.install(downloadPath);
         console.log(installNow);
@@ -50,6 +64,7 @@ const DownloadingPage = () => {
   };
   return (
     <View style={styles.container}>
+      <Loader loading={loading} message={loadermsg} />
       <Progress.Circle
         size={150}
         indeterminate={false}
