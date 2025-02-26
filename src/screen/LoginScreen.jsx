@@ -18,8 +18,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import RNFS, {writeFile} from 'react-native-fs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeviceInfo from 'react-native-device-info';
+import CryptoJS from 'crypto-js';
 // const logo = require('../assets/lbrdc-logo-rnd.webp');
-const logo = require('../assets/animatedLogo.gif');
+// const logo = require('../assets/animatedLogo.gif');
+const logo = require('../assets/newLogo.gif');
 const {width, height} = Dimensions.get('window');
 
 //Components
@@ -121,7 +123,7 @@ const LoginScreen = ({
 
     if (
       data.account.employee == idNumber &&
-      data.account.password == password
+      data.account.password == CryptoJS.SHA256(password.trim()).toString()
     ) {
       if (data.rememberMe != rememberMe) {
         data.rememberMe = rememberMe;
@@ -289,12 +291,13 @@ const LoginScreen = ({
   const forgotPassword = async () => {
     Alert.alert('Notice', 'This feature is not yet available.');
   };
-
+  /*<LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.container}> */
   return (
     <SafeAreaView style={styles.safeArea}>
       <PrivacyPolicyModal visible={isFirstTime} onClose={acceptPolicy} />
       <StatusBar barStyle={'dark-content'} />
       <Loader loading={loading} message={loadermsg} />
+
       <LinearGradient colors={['#4CAF50', '#2E7D32']} style={styles.container}>
         <View style={styles.logoContainer}>
           <Image style={styles.img} source={logo} />

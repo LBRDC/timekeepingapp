@@ -22,6 +22,7 @@
     "react": "18.1.0",
     "react-native": "0.70.15",
     "react-native-biometrics": "^3.0.1",
+    "react-native-check-device-auto-time": "^0.1.0",
     "react-native-device-info": "^13.2.0",
     "react-native-dotenv": "^3.4.11",
     "react-native-encrypted-storage": "^4.0.3",

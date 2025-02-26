@@ -12,7 +12,7 @@ import DownloadingPage from './src/components/DownloadingPage';
 // NAVIGATORS
 import MainNavigator from './src/navigation/MainNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
-
+import CheckDeviceAutoTime from 'react-native-check-device-auto-time';
 // GEOLOCATION
 import Geolocation from 'react-native-geolocation-service';
 import {Platform, Alert, PermissionsAndroid, Linking} from 'react-native';
@@ -35,6 +35,16 @@ const App = () => {
   const [isUpdating, setUpdating] = useState(false);
   const intervalIdRef = useRef(null);
   const downloadPath = RNFS.DocumentDirectoryPath + '/timekeeping.apk';
+
+  useEffect(() => {
+    const checkAutoTime = async () => {
+      const isEnabled = await CheckDeviceAutoTime.isAutomaticTimeEnabled();
+      Alert.alert('Auto Time', isEnabled ? 'Enabled' : 'Disabled');
+    };
+
+    checkAutoTime();
+  }, []);
+
   useEffect(() => {
     NotificationManager.requestNotificationPermission();
     const testOut = async () => {
@@ -63,7 +73,7 @@ const App = () => {
     intervalIdRef.current = setInterval(() => {
       requestPermission();
       isGpsEnable();
-      devOptions();
+      // devOptions();
       dateTime();
     }, 1000);
 

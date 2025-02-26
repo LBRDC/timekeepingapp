@@ -308,6 +308,8 @@ PODS:
     - glog
   - react-native-biometrics (3.0.1):
     - React-Core
+  - react-native-check-device-auto-time (0.1.0):
+    - React-Core
   - react-native-encrypted-storage (4.0.3):
     - React-Core
   - react-native-geolocation-service (5.3.1):
@@ -458,6 +460,7 @@ DEPENDENCIES:
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
+  - react-native-check-device-auto-time (from `../node_modules/react-native-check-device-auto-time`)
   - react-native-encrypted-storage (from `../node_modules/react-native-encrypted-storage`)
   - react-native-geolocation-service (from `../node_modules/react-native-geolocation-service`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
@@ -553,6 +556,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/logger"
   react-native-biometrics:
     :path: "../node_modules/react-native-biometrics"
+  react-native-check-device-auto-time:
+    :path: "../node_modules/react-native-check-device-auto-time"
   react-native-encrypted-storage:
     :path: "../node_modules/react-native-encrypted-storage"
   react-native-geolocation-service:
@@ -646,6 +651,7 @@ SPEC CHECKSUMS:
   React-jsinspector: bfedded1f4f562d29c2d4a8bb795c9a150a739e4
   React-logger: 56142736969724ed81d3ea042a5ad2ef59bb2725
   react-native-biometrics: 43ed5b828646a7862dbc7945556446be00798e7d
+  react-native-check-device-auto-time: 486472f918ea54d5fb8f14e4566840e560194413
   react-native-encrypted-storage: 569d114e329b1c2c2d9f8c84bcdbe4478dda2258
   react-native-geolocation-service: 32b2c2a3b91e70ce2a8d0c684801aaeb0a07e0ec
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba

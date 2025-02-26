@@ -37,9 +37,10 @@ const MainNavigator = ({setIsAuthenticated}) => {
       },
       {
         enableHighAccuracy: true,
-        distanceFilter: 0,
+        distanceFilter: 3,
         interval: 2000,
         fastestInterval: 1000,
+        maximumAge: 1000,
       },
     );
 
