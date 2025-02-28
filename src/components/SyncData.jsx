@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 
-const SyncData = ({onSyncPress}) => {
+const SyncDataComponent = ({onSyncPress}) => {
   return (
     <View style={styles.container}>
       <Image source={require('../assets/sync.png')} style={styles.image} />
@@ -25,7 +25,7 @@ const SyncData = ({onSyncPress}) => {
   );
 };
 
-export default SyncData;
+export default SyncDataComponent;
 
 const styles = StyleSheet.create({
   container: {

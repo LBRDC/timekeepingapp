@@ -50,6 +50,7 @@ import {getCurrentLocation} from '../services/getLocation';
 //Services
 import {URL, executeRequest} from '../services/urls';
 import SystemInfoModal from '../components/systemInfoModal';
+import AllRecordModal from '../components/AllRecordModal';
 //BIOMETRICS
 const Biometrics = new ReactNativeBiometrics();
 const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
@@ -68,6 +69,8 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   const [designatedLocation, setDesignatedLocation] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [records, setRecords] = useState([]);
+  const [allrecords, setAllRecords] = useState([]);
+  const [showAllrecords, setShowAllRecords] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [appInfoModal, setAppInfoModal] = useState(false);
   const [countdownModal, setCountdownModal] = useState(false);
@@ -87,6 +90,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
   // }, []);
 
   useEffect(() => {
+    // startBackgroundTracking();
     setLoading(false);
     syncLocation();
     syncActivity();
@@ -697,6 +701,21 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
     syncActivity();
   };
 
+  const getAllRecords = async () => {
+    const {account} = await readDetails();
+    const data = {accountID: account.accountid};
+
+    executeRequest(URL().allRecords, 'POST', JSON.stringify(data), res => {
+      setloadermsg('Fetching Data...');
+      setLoading(true);
+      if (!res.loading) {
+        setLoading(false);
+        setAllRecords(res.data);
+        setShowAllRecords(true);
+      }
+    });
+  };
+
   const syncBtn = async () => {
     closeMenu();
     syncActivity();
@@ -769,6 +788,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   const helpMenu = async () => {
     closeMenu();
+    await startBackgroundTracking();
     // console.log(await startBackgroundTracking());
     overtimeFunction();
   };
@@ -780,6 +800,11 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
 
   return (
     <>
+      <AllRecordModal
+        visible={showAllrecords}
+        onClose={setShowAllRecords}
+        records={allrecords}
+      />
       <RecordsModal
         records={records}
         visible={showSyncModal}
@@ -820,6 +845,7 @@ const HomeScreen = ({setIsAuthenticated, currentCoordinates}) => {
               onSync={syncBtn}
               onHelp={helpMenu}
               onInfo={onInfo}
+              records={getAllRecords}
             />
           )}
         </View>

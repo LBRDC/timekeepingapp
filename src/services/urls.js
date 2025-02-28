@@ -13,6 +13,7 @@ export function URL() {
     recentAction: `${domain}recentActivity.php`,
     syncRecords: `${domain}syncRecords.php`,
     updateApp: `${updaterDomain}`,
+    allRecords: `${domain}allrecords.php`,
   };
 }
 
